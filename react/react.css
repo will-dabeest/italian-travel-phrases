@@ -314,6 +314,33 @@ body {
   color: #d6d9df;
 }
 
+.roadmap-practice-card {
+  margin-top: 12px;
+}
+
+.btn.is-recording {
+  background: #7a3548;
+  border-color: #a34b65;
+}
+
+.token {
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.token--exact {
+  color: #91f2a4;
+}
+
+.token--close {
+  color: #ffd778;
+}
+
+.token--miss,
+.token--extra {
+  color: #ff9ea3;
+}
+
 @media (max-width: 900px) {
   .roadmap-grid {
     grid-template-columns: 1fr;

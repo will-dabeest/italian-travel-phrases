@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { applyDetailedPracticeRecognition, recognizeAndScore, toRecognitionErrorMessage } from '../pronunciation';
 import { loadState } from '../../state/store';
 import type { AppState, CategoryManifest, Phrase, PhraseCategoryData, PhraseLibraryManifest } from '../../types';
+import { speakItalian } from '../../utils/audio';
 import { createInitialCard, isDue, overdueDays } from '../../utils/srs';
 
 type FilterMode = 'all' | 'needs' | 'mastered' | 'difficult';
@@ -49,11 +51,15 @@ function similarity(a: string, b: string): number {
 
 export function DetailedPracticeView(props: { onBack: () => void }): React.JSX.Element {
   const { onBack } = props;
-  const [appState] = useState<AppState>(() => loadState());
+  const [appState, setAppState] = useState<AppState>(() => loadState());
   const [categories, setCategories] = useState<CategoryManifest[]>([]);
   const [phrases, setPhrases] = useState<Phrase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [recording, setRecording] = useState(false);
+  const [feedbackPhraseId, setFeedbackPhraseId] = useState('');
+  const [feedbackHtml, setFeedbackHtml] = useState(FEEDBACK_PLACEHOLDER_HTML);
 
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -166,6 +172,7 @@ export function DetailedPracticeView(props: { onBack: () => void }): React.JSX.E
 
   const selectedPhrase =
     phrases.find((item) => item.id === selectedPhraseId) ?? visiblePhrases[0] ?? phrases[0];
+  const selectedFeedback = selectedPhrase && feedbackPhraseId === selectedPhrase.id ? feedbackHtml : FEEDBACK_PLACEHOLDER_HTML;
 
   useEffect(() => {
     if (selectedPhrase && selectedPhrase.id !== selectedPhraseId) {
@@ -256,7 +263,10 @@ export function DetailedPracticeView(props: { onBack: () => void }): React.JSX.E
                   key={phrase.id}
                   className={`phrase-item ${selectedPhrase?.id === phrase.id ? 'is-active' : ''}`}
                   data-phrase-id={phrase.id}
-                  onClick={() => setSelectedPhraseId(phrase.id)}
+                  onClick={() => {
+                    setSelectedPhraseId(phrase.id);
+                    setMessage('');
+                  }}
                 >
                   <div className="phrase-it">{phrase.it}</div>
                   <div className="phrase-en">{phrase.en}</div>
@@ -290,11 +300,44 @@ export function DetailedPracticeView(props: { onBack: () => void }): React.JSX.E
               <p className="practice-it">{selectedPhrase.it}</p>
               <p className="practice-en">{selectedPhrase.en}</p>
               <div className="practice-actions">
-                <button id="speak-btn" className="btn" disabled>
+                <button
+                  id="speak-btn"
+                  className="btn"
+                  onClick={() => {
+                    if (!selectedPhrase) return;
+                    speakItalian(selectedPhrase.it).catch((playbackError) => {
+                      setMessage(playbackError instanceof Error ? playbackError.message : 'Could not play pronunciation in this browser.');
+                    });
+                  }}
+                >
                   Play Audio
                 </button>
-                <button id="record-btn" className="btn btn--accent" disabled>
-                  Speak Now
+                <button
+                  id="record-btn"
+                  className={`btn btn--accent ${recording ? 'is-recording' : ''}`}
+                  disabled={recording}
+                  onClick={() => {
+                    if (!selectedPhrase || recording) return;
+                    setRecording(true);
+                    setMessage('');
+
+                    recognizeAndScore(selectedPhrase.it)
+                      .then((result) => {
+                        const apply = applyDetailedPracticeRecognition({ state: appState, phrase: selectedPhrase });
+                        const next = apply(result);
+                        setAppState(next.nextState);
+                        setFeedbackPhraseId(selectedPhrase.id);
+                        setFeedbackHtml(next.feedbackHtml);
+                      })
+                      .catch((recognitionError) => {
+                        setMessage(toRecognitionErrorMessage(recognitionError));
+                      })
+                      .finally(() => {
+                        setRecording(false);
+                      });
+                  }}
+                >
+                  {recording ? 'Listening…' : 'Speak Now'}
                 </button>
               </div>
             </>
@@ -302,7 +345,8 @@ export function DetailedPracticeView(props: { onBack: () => void }): React.JSX.E
             <p>No phrase available with current filters.</p>
           )}
 
-          <div className="feedback" id="feedback" dangerouslySetInnerHTML={{ __html: FEEDBACK_PLACEHOLDER_HTML }}></div>
+          <div className="feedback" id="feedback" dangerouslySetInnerHTML={{ __html: selectedFeedback }}></div>
+          {message ? <p className="message">{message}</p> : null}
         </section>
       </main>
     </section>

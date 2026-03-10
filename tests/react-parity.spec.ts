@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Browser, Page } from '@playwright/test';
+import type { AppState, Phrase } from '../types';
+import { applyRoadmapRecognition } from '../react/pronunciation';
 
 const STORAGE_KEY = 'italian-trainer-state-v1';
 
@@ -103,6 +105,36 @@ async function withParityPages(
     await vanilla.close();
     await react.close();
   }
+}
+
+async function installRecognitionMock(page: Page, transcript: string): Promise<void> {
+  await page.addInitScript((value) => {
+    class MockSpeechRecognition {
+      lang = 'it-IT';
+      interimResults = false;
+      maxAlternatives = 1;
+      onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string; confidence: number }>> }) => void) | null = null;
+      onerror: ((event: { error: string }) => void) | null = null;
+      onend: (() => void) | null = null;
+
+      start(): void {
+        window.setTimeout(() => {
+          this.onresult?.({
+            results: [[{ transcript: value, confidence: 0.99 }]]
+          });
+        }, 0);
+      }
+
+      stop(): void {
+        this.onend?.();
+      }
+    }
+
+    // @ts-expect-error test shim
+    window.SpeechRecognition = MockSpeechRecognition;
+    // @ts-expect-error test shim
+    window.webkitSpeechRecognition = MockSpeechRecognition;
+  }, transcript);
 }
 
 async function getManifestCategoryCount(page: Page): Promise<number> {
@@ -215,5 +247,72 @@ test.describe('React parity executable checks (REACT_MIGRATION.md + REACT_PARITY
       const vanillaSelectedPhraseText = await vanillaPage.locator('.practice-it').innerText();
       await expect(reactPage.locator('.practice-it')).toHaveText(vanillaSelectedPhraseText);
     });
+  });
+
+  test('Step 6 — Pronunciation flow parity: detailed practice feedback @step6', async ({ browser }) => {
+    await withParityPages(browser, async ({ vanillaPage, reactPage }) => {
+      await installRecognitionMock(vanillaPage, 'Buongiorno');
+      await installRecognitionMock(reactPage, 'Buongiorno');
+
+      await seedCustomState('/', vanillaPage, freshState);
+      await seedCustomState('/react.html', reactPage, freshState);
+
+      await vanillaPage.getByRole('button', { name: 'Practice' }).click();
+      await reactPage.getByRole('button', { name: 'Practice' }).click();
+
+      await vanillaPage.locator('#record-btn').click();
+      await reactPage.locator('#record-btn').click();
+
+      const vanillaDetailedFeedback = vanillaPage.locator('#feedback');
+      const reactDetailedFeedback = reactPage.locator('#feedback');
+      const vanillaDetailedText = await vanillaDetailedFeedback.innerText();
+      await expect(vanillaDetailedFeedback).toContainText('Match:');
+      await expect(reactDetailedFeedback).toContainText('Match:');
+      await expect(reactDetailedFeedback).toContainText('Recognition: Buongiorno');
+      await expect(reactDetailedFeedback).toContainText('Match: 100% · Perfect');
+      await expect(reactDetailedFeedback).toContainText('Token diff:');
+      await expect(reactDetailedFeedback).toContainText('Hint:');
+      expect(vanillaDetailedText).toContain('Recognition: Buongiorno');
+      expect(vanillaDetailedText).toContain('Match: 100% · Perfect');
+    });
+  });
+
+  test('Step 6 — Pronunciation flow parity: roadmap pass threshold logic @step6', async () => {
+    const originalWindow = (globalThis as { window?: Window }).window;
+    (globalThis as { window?: Pick<Window, 'localStorage'> }).window = {
+      localStorage: {
+        getItem: () => null,
+        setItem: () => undefined,
+        removeItem: () => undefined,
+        clear: () => undefined,
+        key: () => null,
+        length: 0
+      }
+    };
+
+    try {
+      const phrase: Phrase = {
+        id: 'greetings-0',
+        categoryId: 'greetings',
+        categoryName: 'Greetings & Politeness',
+        it: 'Buongiorno',
+        en: 'Good morning'
+      };
+
+      const apply = applyRoadmapRecognition({
+        state: structuredClone(freshState) as AppState,
+        phrase,
+        mode: 'easy'
+      });
+
+      const passing = apply({ transcript: 'Buongiorno', similarity: 1 });
+      expect(passing.nextState.roadmapProgress.easy['greetings-0']).toBe(1);
+      expect(passing.feedbackHtml).toContain('Roadmap progress:');
+
+      const failing = apply({ transcript: 'Buona sera', similarity: 0.5 });
+      expect(failing.nextState.roadmapProgress.easy['greetings-0'] ?? 0).toBe(0);
+    } finally {
+      (globalThis as { window?: Window }).window = originalWindow;
+    }
   });
 });
