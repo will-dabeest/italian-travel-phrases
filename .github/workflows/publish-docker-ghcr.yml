@@ -67,10 +67,6 @@ jobs:
             echo "should_publish=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Log publish eligibility
-        if: always()
-        run: echo "should_publish=${{ steps.decide.outputs.should_publish }}"
-
   verify:
     name: Verify gates before publish
     needs: detect-publish-changes
