@@ -39,6 +39,10 @@ import {
   isPhraseCompletedInMode as roadmapIsPhraseCompletedInMode,
   isRoadmapPhraseUnlocked as roadmapIsRoadmapPhraseUnlocked
 } from './utils/roadmap';
+import {
+  getFirstRoadmapPhraseIdForCategory,
+  type RoadmapNextTarget
+} from './features/roadmap';
 import { ensureCard, ensureProgress, loadState, resetState, saveState, updateStreak } from './state/store';
 import { escapeHtml, mustQuery } from './ui/dom';
 import {
@@ -46,9 +50,16 @@ import {
   renderPhraseItemButton,
   renderPhrasesCategoryPathPanel,
   renderPhrasesCurrentStateCard,
-  renderRoadmapCategoryButton,
   renderTopbar
 } from './ui/markup';
+import {
+  handleGoRoadmapClick,
+  handleRoadmapModeClick,
+  handleRoadmapNextClick,
+  handleRoadmapSelectionClick,
+  renderRoadmapView
+} from './features/roadmapView';
+import { handlePhrasesCategorySelectionClick, handlePhrasesNavigationClick } from './features/phrasesView';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -58,7 +69,6 @@ interface BeforeInstallPromptEvent extends Event {
 type FilterMode = 'all' | 'needs' | 'mastered' | 'difficult';
 type SortMode = 'relevance' | 'least-progress' | 'most-progress';
 type ViewMode = 'landing' | 'roadmap' | 'detailed' | 'phrases-home' | 'phrases-prompt' | 'phrases-response' | 'phrases-convo';
-type RoadmapNextTarget = { mode: DifficultyMode; categoryId: string; phraseId: string } | null;
 
 const CATEGORY_ORDER = [
   'greetings',
@@ -231,44 +241,6 @@ function isCategoryUnlocked(index: number, ordered: CategoryManifest[], mode: Di
 
 function getFirstUnlockedCategory(mode: DifficultyMode): CategoryManifest | undefined {
   return roadmapGetFirstUnlockedCategory(runtime.state, getOrderedCategories(), mode);
-}
-
-function getRoadmapPhraseIdsForCategory(categoryId: string): string[] {
-  return getLoadedPhrases()
-    .filter((phrase) => phrase.categoryId === categoryId)
-    .sort((a, b) => getPhraseIndex(a.id) - getPhraseIndex(b.id))
-    .map((phrase) => phrase.id);
-}
-
-function getNextRoadmapTarget(mode: DifficultyMode, currentCategoryId: string, currentPhraseId: string): RoadmapNextTarget {
-  const phraseIds = getRoadmapPhraseIdsForCategory(currentCategoryId);
-  const currentIndex = phraseIds.indexOf(currentPhraseId);
-  if (currentIndex >= 0 && currentIndex < phraseIds.length - 1) {
-    return { mode, categoryId: currentCategoryId, phraseId: phraseIds[currentIndex + 1] };
-  }
-
-  const ordered = getOrderedCategories();
-  const currentCategoryIndex = ordered.findIndex((category) => category.id === currentCategoryId);
-  if (currentCategoryIndex >= 0) {
-    for (let index = currentCategoryIndex + 1; index < ordered.length; index += 1) {
-      const category = ordered[index];
-      if (!isCategoryUnlocked(index, ordered, mode)) continue;
-      const nextPhraseId = `${category.id}-0`;
-      return { mode, categoryId: category.id, phraseId: nextPhraseId };
-    }
-  }
-
-  if (mode === 'easy' && isModeUnlocked('intermediate')) {
-    const nextCategory = getFirstUnlockedCategory('intermediate');
-    if (nextCategory) return { mode: 'intermediate', categoryId: nextCategory.id, phraseId: `${nextCategory.id}-0` };
-  }
-
-  if (mode === 'intermediate' && isModeUnlocked('hard')) {
-    const nextCategory = getFirstUnlockedCategory('hard');
-    if (nextCategory) return { mode: 'hard', categoryId: nextCategory.id, phraseId: `${nextCategory.id}-0` };
-  }
-
-  return null;
 }
 
 async function goToRoadmapTarget(target: Exclude<RoadmapNextTarget, null>): Promise<void> {
@@ -700,18 +672,6 @@ function phraseItemMarkup(phrase: Phrase): string {
   });
 }
 
-function roadmapCategoryMarkup(category: CategoryManifest, index: number, ordered: CategoryManifest[], mode: DifficultyMode): string {
-  const completion = getCategoryCompletion(category, mode);
-  const unlocked = isCategoryUnlocked(index, ordered, mode);
-
-  return renderRoadmapCategoryButton({
-    category,
-    completion,
-    isActive: runtime.activeRoadmapCategoryId === category.id,
-    isUnlocked: unlocked
-  });
-}
-
 function playFeedbackSound(kind: 'correct' | 'phrase-complete' | 'category-complete'): void {
   const Ctx = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!Ctx) return;
@@ -774,9 +734,13 @@ async function chooseRoadmapCategory(categoryId: string, mode: DifficultyMode): 
   runtime.activeRoadmapCategoryId = categoryId;
   await ensureCategoryLoaded(categoryId);
 
-  const categoryPhrases = getLoadedPhrases().filter((phrase) => phrase.categoryId === categoryId).sort((a, b) => getPhraseIndex(a.id) - getPhraseIndex(b.id));
-  const firstIncomplete = categoryPhrases.find((phrase) => !isPhraseCompletedInMode(phrase.id, mode));
-  runtime.selectedPhraseId = (firstIncomplete ?? categoryPhrases[0])?.id ?? runtime.selectedPhraseId;
+  const firstPhraseId = getFirstRoadmapPhraseIdForCategory({
+    categoryId,
+    mode,
+    loadedPhrases: getLoadedPhrases(),
+    isPhraseCompletedInMode
+  });
+  runtime.selectedPhraseId = firstPhraseId || runtime.selectedPhraseId;
 }
 
 function applySrsScore(phrase: Phrase, similarity: number, quality: number): void {
@@ -1110,73 +1074,31 @@ function renderConvoMode(): string {
 }
 
 function renderRoadmap(): string {
-  const mode = runtime.activeDifficulty;
-  const ordered = getOrderedCategories();
-  const firstUnlocked = getFirstUnlockedCategory(mode);
-  const activeCategory = ordered.find((cat) => cat.id === runtime.activeRoadmapCategoryId) ?? firstUnlocked;
+  const result = renderRoadmapView({
+    mode: runtime.activeDifficulty,
+    orderedCategories: getOrderedCategories(),
+    activeRoadmapCategoryId: runtime.activeRoadmapCategoryId,
+    selectedPhraseId: runtime.selectedPhraseId,
+    loadedPhrases: getLoadedPhrases(),
+    recording: runtime.recording,
+    isPhrasesModeUnlocked,
+    isModeUnlocked,
+    getCategoryCompletion,
+    isCategoryUnlocked,
+    getPhrasePasses,
+    getPhraseIndex,
+    isRoadmapPhraseUnlocked,
+    getSelectedFeedback,
+    feedbackPlaceholderHtml: FEEDBACK_PLACEHOLDER_HTML,
+    escapeHtml,
+    isModeUnlockedForProgression: isModeUnlocked,
+    getFirstUnlockedCategory
+  });
 
-  if (activeCategory && runtime.activeRoadmapCategoryId !== activeCategory.id) runtime.activeRoadmapCategoryId = activeCategory.id;
+  runtime.activeRoadmapCategoryId = result.activeRoadmapCategoryId;
+  runtime.selectedPhraseId = result.selectedPhraseId;
 
-  const activePhrases = getLoadedPhrases().filter((phrase) => phrase.categoryId === runtime.activeRoadmapCategoryId).sort((a, b) => getPhraseIndex(a.id) - getPhraseIndex(b.id));
-  const selected = activePhrases.find((phrase) => phrase.id === runtime.selectedPhraseId) ?? activePhrases[0];
-  if (selected) runtime.selectedPhraseId = selected.id;
-  const selectedFeedback = getSelectedFeedback(selected?.id);
-  const completion = activeCategory ? getCategoryCompletion(activeCategory, mode) : { complete: 0, total: 0, percent: 0 };
-  const selectedPasses = selected ? getPhrasePasses(selected.id) : 0;
-  const selectedStep = selected ? getPhraseIndex(selected.id) + 1 : 0;
-  const roadmapNextTarget = selected && selectedPasses >= 3 ? getNextRoadmapTarget(mode, selected.categoryId, selected.id) : null;
-
-  return `${renderTopbar({
-    title: `Roadmap Learning (${mode[0].toUpperCase() + mode.slice(1)})`,
-    subtitleHtml: 'Progress through categories in order. Each phrase needs 3 successful runs at least 90%.',
-    actions: [
-      { id: 'go-home', label: 'Home' },
-      { id: 'go-phrases', label: `Phrases ${isPhrasesModeUnlocked() ? '' : '🔒'}`, disabled: !isPhrasesModeUnlocked() },
-      { id: 'go-detailed', label: 'Practice' }
-    ]
-  })}<section class="mode-switch card"><h2>Difficulty</h2><div class="chips"><button class="chip ${
-    mode === 'easy' ? 'is-active' : ''
-  }" data-mode="easy">Easy ${isModeUnlocked('easy') ? '' : '🔒'}</button><button class="chip ${mode === 'intermediate' ? 'is-active' : ''}" data-mode="intermediate" ${
-    isModeUnlocked('intermediate') ? '' : 'disabled'
-  }>Intermediate ${isModeUnlocked('intermediate') ? '' : '🔒'}</button><button class="chip ${mode === 'hard' ? 'is-active' : ''}" data-mode="hard" ${
-    isModeUnlocked('hard') ? '' : 'disabled'
-  }>Hard ${isModeUnlocked('hard') ? '' : '🔒'}</button></div><p class="section-note">Unlock Intermediate by completing all Easy phrases. Unlock Hard by completing all Intermediate phrases.</p></section>
-
-  <section class="card roadmap-state"><h2>Current State</h2><p><strong>Category:</strong> ${escapeHtml(activeCategory?.name ?? '—')} · <strong>Progress:</strong> ${completion.complete}/${completion.total} (${completion.percent}%)</p><p><strong>Current Phrase:</strong> ${selectedStep}/${activePhrases.length} · <strong>Passes:</strong> ${selectedPasses}/3</p></section>
-
-  <section class="roadmap-panels">
-    <details class="card roadmap-panel"><summary>Category Path</summary><div class="roadmap-list">${ordered
-      .map((cat, index) => roadmapCategoryMarkup(cat, index, ordered, mode))
-      .join('')}</div></details>
-
-    <details class="card roadmap-panel"><summary>Category Phrases</summary><div class="roadmap-phrases">${activePhrases
-      .map((phrase) => {
-        const passes = getPhrasePasses(phrase.id);
-        const done = passes >= 3;
-        const phraseIndex = getPhraseIndex(phrase.id);
-        const unlocked = done || isRoadmapPhraseUnlocked(phrase.categoryId, phraseIndex, mode);
-        return `<button class="roadmap-phrase ${runtime.selectedPhraseId === phrase.id ? 'is-active' : ''} ${unlocked ? '' : 'is-locked'}" data-roadmap-phrase="${phrase.id}" ${
-          unlocked ? '' : 'disabled'
-        }><span>${escapeHtml(mode === 'hard' ? phrase.en : phrase.it)}</span><span>${done ? '✅' : unlocked ? `${passes}/3` : '🔒'}</span></button>`;
-      })
-      .join('')}</div></details>
-
-    <details class="card roadmap-panel" open><summary>Practice</summary>${
-      selected
-        ? `<div class="practice-compact">${mode === 'hard' ? '' : `<p class="practice-it">${escapeHtml(selected.it)}</p>`}<p class="practice-en">${escapeHtml(
-            selected.en
-          )}</p>${mode === 'hard' ? '' : `<p class="practice-ipa">/ ${escapeHtml(toIpaHint(selected.it))} /</p>`}<div class="practice-actions">${
-            mode === 'easy' ? '<button id="speak-btn" class="btn" aria-label="Play audio pronunciation">Play Audio</button>' : ''
-          }<button id="record-btn" class="btn btn--accent ${runtime.recording ? 'is-recording' : ''}" aria-label="Record pronunciation">${
-            runtime.recording ? 'Listening…' : 'Speak Now'
-          }</button>${
-            roadmapNextTarget
-              ? `<button class="btn btn--ghost" data-roadmap-next-mode="${roadmapNextTarget.mode}" data-roadmap-next-category="${roadmapNextTarget.categoryId}" data-roadmap-next-phrase="${roadmapNextTarget.phraseId}">Next</button>`
-              : ''
-          }</div><div class="feedback" id="feedback">${selectedFeedback || FEEDBACK_PLACEHOLDER_HTML}</div></div>`
-        : '<p>No phrase loaded yet.</p>'
-    }</details>
-  </section>`;
+  return result.html;
 }
 
 function renderDetailed(): string {
@@ -1274,6 +1196,24 @@ function saveAndRender(): void {
   render();
 }
 
+const roadmapAdapter = {
+  setViewModeRoadmap(): void {
+    runtime.viewMode = 'roadmap';
+  },
+  setMessage(message: string): void {
+    runtime.message = message;
+  },
+  setActiveDifficulty(mode: DifficultyMode): void {
+    runtime.activeDifficulty = mode;
+  },
+  clearFeedback(): void {
+    clearPracticeFeedback();
+  },
+  setSelectedPhraseId(phraseId: string): void {
+    runtime.selectedPhraseId = phraseId;
+  }
+};
+
 function handleNavigationClick(target: HTMLElement): boolean {
   if (target.closest('#go-home')) {
     runtime.viewMode = 'landing';
@@ -1281,86 +1221,53 @@ function handleNavigationClick(target: HTMLElement): boolean {
     return true;
   }
 
-  if (target.closest('#go-roadmap')) {
-    runtime.viewMode = 'roadmap';
-    const next = getFirstUnlockedCategory(runtime.activeDifficulty);
-    runAndRender(next ? chooseRoadmapCategory(next.id, runtime.activeDifficulty) : undefined);
+  if (
+    handlePhrasesNavigationClick({
+      target,
+      isPhrasesModeUnlocked,
+      isPhrasesSubModeUnlocked,
+      getFirstUnlockedPhrasesCategoryId,
+      initializePromptCategory,
+      initializeResponseCategory,
+      initializeConvoCategory,
+      setPhrasesViewForStage,
+      setViewModePhrasesHome: () => {
+        runtime.viewMode = 'phrases-home';
+      },
+      setMessage: roadmapAdapter.setMessage,
+      render
+    })
+  ) {
     return true;
   }
 
-  if (target.closest('#go-phrases')) {
-    if (!isPhrasesModeUnlocked()) {
-      runtime.message = 'Complete all Roadmap phrases through Hard mode to unlock Phrases mode.';
-      render();
-      return true;
-    }
-
-    runtime.viewMode = 'phrases-home';
-    runtime.message = '';
-    render();
+  if (
+    handleGoRoadmapClick({
+      target,
+      activeDifficulty: runtime.activeDifficulty,
+      setViewModeRoadmap: roadmapAdapter.setViewModeRoadmap,
+      getFirstUnlockedCategory,
+      chooseRoadmapCategory,
+      runAndRender
+    })
+  ) {
     return true;
   }
 
-  if (target.closest('#phr-home')) {
-    runtime.viewMode = 'phrases-home';
-    runtime.message = '';
-    render();
-    return true;
-  }
-
-  if (target.closest('#phr-open-prompt')) {
-    if (!isPhrasesSubModeUnlocked('prompt')) {
-      runtime.message = 'Prompt is locked.';
-      render();
-      return true;
-    }
-    const categoryId = getFirstUnlockedPhrasesCategoryId('prompt');
-    if (categoryId) initializePromptCategory(categoryId);
-    runtime.viewMode = 'phrases-prompt';
-    render();
-    return true;
-  }
-
-  if (target.closest('#phr-open-response')) {
-    if (!isPhrasesSubModeUnlocked('response')) {
-      runtime.message = 'Complete all Prompt categories to unlock Response.';
-      render();
-      return true;
-    }
-    const categoryId = getFirstUnlockedPhrasesCategoryId('response');
-    if (categoryId) initializeResponseCategory(categoryId);
-    runtime.viewMode = 'phrases-response';
-    render();
-    return true;
-  }
-
-  if (target.closest('#phr-open-convo')) {
-    if (!isPhrasesSubModeUnlocked('convo')) {
-      runtime.message = 'Complete all Response categories to unlock Convo.';
-      render();
-      return true;
-    }
-    const categoryId = getFirstUnlockedPhrasesCategoryId('convo');
-    if (categoryId) initializeConvoCategory(categoryId);
-    runtime.viewMode = 'phrases-convo';
-    render();
-    return true;
-  }
-
-  const modeBtn = target.closest<HTMLElement>('[data-mode]');
-  if (modeBtn?.dataset.mode) {
-    const nextMode = modeBtn.dataset.mode as DifficultyMode;
-    if (!isModeUnlocked(nextMode)) {
-      runtime.message = getModeUnlockMessage(nextMode);
-      render();
-      return true;
-    }
-
-    runtime.activeDifficulty = nextMode;
-    clearPracticeFeedback();
-
-    const nextCategory = getFirstUnlockedCategory(nextMode);
-    runAndRender(nextCategory ? chooseRoadmapCategory(nextCategory.id, nextMode) : undefined);
+  if (
+    handleRoadmapModeClick({
+      target,
+      isModeUnlocked,
+      getModeUnlockMessage,
+      setMessage: roadmapAdapter.setMessage,
+      render,
+      setActiveDifficulty: roadmapAdapter.setActiveDifficulty,
+      clearPracticeFeedback: roadmapAdapter.clearFeedback,
+      getFirstUnlockedCategory,
+      chooseRoadmapCategory,
+      runAndRender
+    })
+  ) {
     return true;
   }
 
@@ -1374,17 +1281,17 @@ function handleNavigationClick(target: HTMLElement): boolean {
 }
 
 function handleSelectionClick(target: HTMLElement): boolean {
-  const roadmapCategoryBtn = target.closest<HTMLElement>('[data-roadmap-category]');
-  if (roadmapCategoryBtn?.dataset.roadmapCategory) {
-    runAndRender(chooseRoadmapCategory(roadmapCategoryBtn.dataset.roadmapCategory, runtime.activeDifficulty));
-    return true;
-  }
-
-  const roadmapPhraseBtn = target.closest<HTMLElement>('[data-roadmap-phrase]');
-  if (roadmapPhraseBtn?.dataset.roadmapPhrase) {
-    runtime.selectedPhraseId = roadmapPhraseBtn.dataset.roadmapPhrase;
-    clearPracticeFeedback();
-    render();
+  if (
+    handleRoadmapSelectionClick({
+      target,
+      activeDifficulty: runtime.activeDifficulty,
+      chooseRoadmapCategory,
+      runAndRender,
+      setSelectedPhraseId: roadmapAdapter.setSelectedPhraseId,
+      clearPracticeFeedback,
+      render
+    })
+  ) {
     return true;
   }
 
@@ -1417,36 +1324,19 @@ function handleSelectionClick(target: HTMLElement): boolean {
     return true;
   }
 
-  const promptCategoryBtn = target.closest<HTMLElement>('[data-prompt-category]');
-  if (promptCategoryBtn?.dataset.promptCategory) {
-    const categories = getPromptCategories();
-    const index = categories.findIndex((category) => category.id === promptCategoryBtn.dataset.promptCategory);
-    if (index >= 0 && isPhrasesCategoryUnlocked('prompt', index)) {
-      initializePromptCategory(promptCategoryBtn.dataset.promptCategory);
-      render();
-    }
-    return true;
-  }
-
-  const responseCategoryBtn = target.closest<HTMLElement>('[data-response-category]');
-  if (responseCategoryBtn?.dataset.responseCategory) {
-    const categories = getResponseCategories();
-    const index = categories.findIndex((category) => category.id === responseCategoryBtn.dataset.responseCategory);
-    if (index >= 0 && isPhrasesCategoryUnlocked('response', index)) {
-      initializeResponseCategory(responseCategoryBtn.dataset.responseCategory);
-      render();
-    }
-    return true;
-  }
-
-  const convoCategoryBtn = target.closest<HTMLElement>('[data-convo-category]');
-  if (convoCategoryBtn?.dataset.convoCategory) {
-    const categories = getConvoCategories();
-    const index = categories.findIndex((category) => category.id === convoCategoryBtn.dataset.convoCategory);
-    if (index >= 0 && isPhrasesCategoryUnlocked('convo', index)) {
-      initializeConvoCategory(convoCategoryBtn.dataset.convoCategory);
-      render();
-    }
+  if (
+    handlePhrasesCategorySelectionClick({
+      target,
+      getPromptCategoryIds: () => getPromptCategories().map((category) => category.id),
+      getResponseCategoryIds: () => getResponseCategories().map((category) => category.id),
+      getConvoCategoryIds: () => getConvoCategories().map((category) => category.id),
+      isPhrasesCategoryUnlocked,
+      initializePromptCategory,
+      initializeResponseCategory,
+      initializeConvoCategory,
+      render
+    })
+  ) {
     return true;
   }
 
@@ -1514,19 +1404,8 @@ function handleSelectionClick(target: HTMLElement): boolean {
 }
 
 function handlePracticeClick(target: HTMLElement): boolean {
-  const roadmapNextBtn = target.closest<HTMLElement>('[data-roadmap-next-mode][data-roadmap-next-category][data-roadmap-next-phrase]');
-  if (roadmapNextBtn?.dataset.roadmapNextMode && roadmapNextBtn.dataset.roadmapNextCategory && roadmapNextBtn.dataset.roadmapNextPhrase) {
-    const nextMode = roadmapNextBtn.dataset.roadmapNextMode;
-    if (nextMode === 'easy' || nextMode === 'intermediate' || nextMode === 'hard') {
-      runAndRender(
-        goToRoadmapTarget({
-          mode: nextMode,
-          categoryId: roadmapNextBtn.dataset.roadmapNextCategory,
-          phraseId: roadmapNextBtn.dataset.roadmapNextPhrase
-        })
-      );
-      return true;
-    }
+  if (handleRoadmapNextClick({ target, goToRoadmapTarget, runAndRender })) {
+    return true;
   }
 
   const nextExerciseBtn = target.closest<HTMLElement>('[data-next-stage][data-next-category]');

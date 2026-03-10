@@ -42,6 +42,9 @@ A static, offline-capable, dark-mode-first web app to practice practical Italian
 - `style.css`
 - `types.ts`
 - `state/store.ts`
+- `features/roadmap.ts`
+- `features/roadmapView.ts`
+- `features/phrasesView.ts`
 - `utils/scoring.ts`
 - `utils/audio.ts`
 - `utils/recognition.ts`
