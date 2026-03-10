@@ -57,6 +57,8 @@ jobs:
             command: npm run ci:parity:step5
           - stepLabel: Step 6 — Pronunciation Flow Parity
             command: npm run ci:parity:step6
+          - stepLabel: Step 7 — Phrases Mode Parity
+            command: npm run ci:parity:step7
 
     steps:
       - name: Checkout

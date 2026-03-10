@@ -137,12 +137,81 @@ async function installRecognitionMock(page: Page, transcript: string): Promise<v
   }, transcript);
 }
 
+async function unlockPhrasesMode(page: Page): Promise<void> {
+  await page.evaluate(async (key) => {
+    const response = await fetch('/phrases.json', { cache: 'no-store' });
+    const manifest = (await response.json()) as { categories?: Array<{ id: string; count: number }> };
+    const state = JSON.parse(window.localStorage.getItem(key) || '{}');
+
+    const easy: Record<string, number> = {};
+    const intermediate: Record<string, number> = {};
+    const hard: Record<string, number> = {};
+
+    for (const category of manifest.categories ?? []) {
+      for (let index = 0; index < (category.count ?? 0); index += 1) {
+        const phraseId = `${category.id}-${index}`;
+        easy[phraseId] = 3;
+        intermediate[phraseId] = 3;
+        hard[phraseId] = 3;
+      }
+    }
+
+    state.roadmapProgress = { easy, intermediate, hard };
+    window.localStorage.setItem(key, JSON.stringify(state));
+  }, STORAGE_KEY);
+
+  await page.reload();
+}
+
 async function getManifestCategoryCount(page: Page): Promise<number> {
   return page.evaluate(async () => {
     const response = await fetch('/phrases.json', { cache: 'no-store' });
     const data = (await response.json()) as { categories?: unknown[] };
     return Array.isArray(data.categories) ? data.categories.length : 0;
   });
+}
+
+async function advancePromptToMatch(page: Page): Promise<void> {
+  const matchAudio = page.locator('[data-prompt-match-audio]').first();
+  const nextButton = page.locator('#prompt-next');
+
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    if (await matchAudio.isVisible().catch(() => false)) return;
+    await nextButton.click();
+  }
+
+  throw new Error('Timed out advancing Prompt learn phase to match phase.');
+}
+
+async function triggerPromptMismatch(page: Page): Promise<void> {
+  const audioButtons = page.locator('[data-prompt-match-audio]');
+  const englishButtons = page.locator('[data-prompt-match-english]');
+  const audioCount = await audioButtons.count();
+  const englishCount = await englishButtons.count();
+
+  if (audioCount < 1 || englishCount < 2) {
+    throw new Error('Prompt match UI does not have enough items to verify mismatch reset.');
+  }
+
+  const selectedAudio = audioButtons.first();
+  const audioId = await selectedAudio.getAttribute('data-prompt-match-audio');
+  if (!audioId) throw new Error('Selected prompt audio item has no data id.');
+
+  let mismatchEnglishIndex = -1;
+  for (let index = 0; index < englishCount; index += 1) {
+    const englishId = await englishButtons.nth(index).getAttribute('data-prompt-match-english');
+    if (englishId && englishId !== audioId) {
+      mismatchEnglishIndex = index;
+      break;
+    }
+  }
+
+  if (mismatchEnglishIndex < 0) {
+    throw new Error('Could not find a non-matching English option for prompt mismatch test.');
+  }
+
+  await selectedAudio.click();
+  await englishButtons.nth(mismatchEnglishIndex).click();
 }
 
 test.describe('React parity executable checks (REACT_MIGRATION.md + REACT_PARITY_CHECKLIST.md)', () => {
@@ -314,5 +383,43 @@ test.describe('React parity executable checks (REACT_MIGRATION.md + REACT_PARITY
     } finally {
       (globalThis as { window?: Window }).window = originalWindow;
     }
+  });
+
+  test('Step 7 — Phrases mode parity: unlock chain and prompt mismatch reset @step7', async ({ browser }) => {
+    test.setTimeout(60_000);
+
+    await withParityPages(browser, async ({ vanillaPage, reactPage }) => {
+      await seedCustomState('/', vanillaPage, freshState);
+      await seedCustomState('/react.html', reactPage, freshState);
+      await unlockPhrasesMode(vanillaPage);
+      await unlockPhrasesMode(reactPage);
+
+      await expect(vanillaPage.getByRole('button', { name: /Phrases/ })).toBeEnabled();
+      await expect(reactPage.getByRole('button', { name: /Phrases/ })).toBeEnabled();
+
+      await vanillaPage.getByRole('button', { name: /Phrases/ }).click();
+      await reactPage.getByRole('button', { name: /Phrases/ }).click();
+
+      await expect(vanillaPage.locator('#phr-open-prompt')).toBeEnabled();
+      await expect(reactPage.locator('#phr-open-prompt')).toBeEnabled();
+      await expect(vanillaPage.locator('#phr-open-response')).toBeDisabled();
+      await expect(reactPage.locator('#phr-open-response')).toBeDisabled();
+      await expect(vanillaPage.locator('#phr-open-convo')).toBeDisabled();
+      await expect(reactPage.locator('#phr-open-convo')).toBeDisabled();
+
+      await vanillaPage.locator('#phr-open-prompt').click();
+      await reactPage.locator('#phr-open-prompt').click();
+
+      await advancePromptToMatch(vanillaPage);
+      await advancePromptToMatch(reactPage);
+
+      await triggerPromptMismatch(vanillaPage);
+      await triggerPromptMismatch(reactPage);
+
+      await expect(vanillaPage.locator('.message')).toContainText('reset');
+      await expect(reactPage.locator('.message')).toContainText('reset');
+      await expect(vanillaPage.locator('.is-matched')).toHaveCount(0);
+      await expect(reactPage.locator('.is-matched')).toHaveCount(0);
+    });
   });
 });

@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
+import { loadState } from '../state/store';
+import type { CategoryManifest } from '../types';
+import { isModeFullyCompleted } from '../utils/roadmap';
 import { DetailedPracticeView } from './views/DetailedPracticeView';
+import { PhrasesModeView } from './views/PhrasesModeView';
 import { RoadmapView } from './views/RoadmapView';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -25,7 +29,28 @@ function PlaceholderView(props: { title: string; onBack: () => void }): React.JS
 export function App(): React.JSX.Element {
   const [view, setView] = useState<ReactView>('landing');
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [phrasesUnlocked] = useState(false);
+  const [phrasesUnlocked, setPhrasesUnlocked] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPhrasesUnlock() {
+      try {
+        const response = await fetch('/phrases.json', { cache: 'force-cache' });
+        const data = (await response.json()) as { categories?: CategoryManifest[] };
+        if (cancelled) return;
+        const appState = loadState();
+        setPhrasesUnlocked(isModeFullyCompleted(appState, data.categories ?? [], 'hard'));
+      } catch {
+        if (!cancelled) setPhrasesUnlocked(false);
+      }
+    }
+
+    void loadPhrasesUnlock();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const onBeforeInstallPrompt = (event: Event) => {
@@ -39,7 +64,7 @@ export function App(): React.JSX.Element {
 
   if (view === 'roadmap') return <RoadmapView onBack={() => setView('landing')} />;
   if (view === 'detailed') return <DetailedPracticeView onBack={() => setView('landing')} />;
-  if (view === 'phrases') return <PlaceholderView title="Phrases" onBack={() => setView('landing')} />;
+  if (view === 'phrases') return <PhrasesModeView onBack={() => setView('landing')} />;
 
   return (
     <main className="react-shell" aria-label="React landing screen">
