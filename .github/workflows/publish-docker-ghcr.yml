@@ -3,6 +3,18 @@ name: Publish Docker Image
 on:
   pull_request:
     types: [closed]
+  workflow_dispatch:
+    inputs:
+      force_publish:
+        description: 'Bypass change filter and publish current ref'
+        required: true
+        default: false
+        type: boolean
+      publish_ref:
+        description: 'Git ref to publish when manually dispatched'
+        required: false
+        default: main
+        type: string
 
 permissions:
   contents: read
@@ -11,13 +23,14 @@ permissions:
 jobs:
   detect-publish-changes:
     name: Detect publish-relevant changes
-    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main')
     runs-on: ubuntu-latest
     outputs:
-      should_publish: ${{ steps.filter.outputs.publish }}
+      should_publish: ${{ steps.decide.outputs.should_publish }}
 
     steps:
       - name: Filter changed files
+        if: github.event_name == 'pull_request'
         id: filter
         uses: dorny/paths-filter@v3
         with:
@@ -42,17 +55,33 @@ jobs:
               - 'ui/**'
               - 'utils/**'
 
+      - name: Determine publish eligibility
+        id: decide
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.force_publish }}" == "true" ]]; then
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ steps.filter.outputs.publish }}" == "true" ]]; then
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Log publish eligibility
+        if: always()
+        run: echo "should_publish=${{ steps.decide.outputs.should_publish }}"
+
   verify:
     name: Verify gates before publish
     needs: detect-publish-changes
-    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && needs.detect-publish-changes.outputs.should_publish == 'true'
+    if: needs.detect-publish-changes.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout merged commit
+      - name: Checkout target ref
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.merge_commit_sha || inputs.publish_ref }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -86,14 +115,14 @@ jobs:
   publish:
     name: Publish image to GHCR
     needs: [detect-publish-changes, verify]
-    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && needs.detect-publish-changes.outputs.should_publish == 'true'
+    if: needs.detect-publish-changes.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout merged commit
+      - name: Checkout target ref
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.merge_commit_sha || inputs.publish_ref }}
 
       - name: Log in to GHCR
         uses: docker/login-action@v3

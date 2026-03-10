@@ -141,6 +141,7 @@ Recommendation:
 - Safety gate: publish runs only after parity/test checks pass (`ci:parity:gates`, checklist validation, and all declared step parity tests via `ci:parity:all-steps`)
 - Registry target: `ghcr.io/<your-github-owner>/italian-travel-phrase-trainer`
 - Tags pushed: `latest` and commit SHA tag (`sha-<commit>`)
+- Bootstrap/catch-up option: run the same workflow manually (`workflow_dispatch`) with `force_publish=true` and `publish_ref=main`.
 
 ## Netlify Deployment
 
