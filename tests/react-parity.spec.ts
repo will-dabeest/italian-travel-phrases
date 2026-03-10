@@ -29,6 +29,42 @@ const step4Fixture = {
   }
 };
 
+const step5Fixture = {
+  ...freshState,
+  progress: {
+    'greetings-0': {
+      attempts: 6,
+      totalAccuracy: 5.1,
+      lastAccuracy: 0.9,
+      difficult: false,
+      mastered: true
+    },
+    'greetings-1': {
+      attempts: 5,
+      totalAccuracy: 2.1,
+      lastAccuracy: 0.4,
+      difficult: true,
+      mastered: false
+    }
+  },
+  srs: {
+    'greetings-0': {
+      interval: 28,
+      repetitions: 5,
+      easinessFactor: 2.5,
+      lastReviewed: '2026-03-01T00:00:00.000Z',
+      nextReview: '2026-03-20T00:00:00.000Z'
+    },
+    'greetings-1': {
+      interval: 2,
+      repetitions: 1,
+      easinessFactor: 1.9,
+      lastReviewed: '2026-02-20T00:00:00.000Z',
+      nextReview: '2026-02-24T00:00:00.000Z'
+    }
+  }
+};
+
 async function seedState(pagePath: '/' | '/react.html', page: import('@playwright/test').Page): Promise<void> {
   await seedCustomState(pagePath, page, freshState);
 }
@@ -143,6 +179,41 @@ test.describe('React parity executable checks (REACT_MIGRATION.md + REACT_PARITY
       await expect(reactPage.locator('[data-roadmap-phrase="greetings-0"]')).toBeEnabled();
       await expect(reactPage.locator('[data-roadmap-phrase="greetings-1"]')).toBeEnabled();
       await expect(reactPage.locator('[data-roadmap-phrase="greetings-2"]')).toBeDisabled();
+    });
+  });
+
+  test('Step 5 — Detailed practice parity: filters, badges, and selection @step5', async ({ browser }) => {
+    await withParityPages(browser, async ({ vanillaPage, reactPage }) => {
+      await seedCustomState('/', vanillaPage, step5Fixture);
+      await seedCustomState('/react.html', reactPage, step5Fixture);
+
+      await vanillaPage.getByRole('button', { name: 'Practice' }).click();
+      await reactPage.getByRole('button', { name: 'Practice' }).click();
+
+      await expect(vanillaPage.locator('#search')).toBeVisible();
+      await expect(reactPage.locator('#search')).toBeVisible();
+
+      await vanillaPage.locator('[data-filter="difficult"]').click();
+      await reactPage.locator('[data-filter="difficult"]').click();
+      await expect(vanillaPage.locator('[data-phrase-id]')).toHaveCount(1);
+      await expect(reactPage.locator('[data-phrase-id]')).toHaveCount(1);
+
+      await vanillaPage.locator('[data-filter="all"]').click();
+      await reactPage.locator('[data-filter="all"]').click();
+      await expect(vanillaPage.locator('.badge--overdue')).toHaveCount(1);
+      await expect(reactPage.locator('.badge--overdue')).toHaveCount(1);
+
+      await vanillaPage.locator('#sort-select').selectOption('least-progress');
+      await reactPage.locator('#sort-select').selectOption('least-progress');
+      const vanillaFirstPhrase = vanillaPage.locator('[data-phrase-id]').first().locator('.phrase-it');
+      const reactFirstPhrase = reactPage.locator('[data-phrase-id]').first().locator('.phrase-it');
+      await expect(reactFirstPhrase).toHaveText(await vanillaFirstPhrase.innerText());
+
+      await vanillaPage.locator('[data-phrase-id="greetings-1"]').click();
+      await reactPage.locator('[data-phrase-id="greetings-1"]').click();
+
+      const vanillaSelectedPhraseText = await vanillaPage.locator('.practice-it').innerText();
+      await expect(reactPage.locator('.practice-it')).toHaveText(vanillaSelectedPhraseText);
     });
   });
 });

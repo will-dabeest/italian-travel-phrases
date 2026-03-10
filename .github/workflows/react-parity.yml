@@ -45,6 +45,8 @@ jobs:
             command: npm run ci:parity:step3
           - stepLabel: Step 4 — Roadmap Behavioral Parity
             command: npm run ci:parity:step4
+          - stepLabel: Step 5 — Detailed Practice Parity
+            command: npm run ci:parity:step5
 
     steps:
       - name: Checkout

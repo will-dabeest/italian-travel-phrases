@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { DetailedPracticeView } from './views/DetailedPracticeView';
 import { RoadmapView } from './views/RoadmapView';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -37,7 +38,7 @@ export function App(): React.JSX.Element {
   }, []);
 
   if (view === 'roadmap') return <RoadmapView onBack={() => setView('landing')} />;
-  if (view === 'detailed') return <PlaceholderView title="Practice" onBack={() => setView('landing')} />;
+  if (view === 'detailed') return <DetailedPracticeView onBack={() => setView('landing')} />;
   if (view === 'phrases') return <PlaceholderView title="Phrases" onBack={() => setView('landing')} />;
 
   return (
