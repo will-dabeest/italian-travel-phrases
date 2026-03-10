@@ -1,0 +1,31 @@
+﻿{
+    "id":  "social",
+    "name":  "Social / Human Interaction",
+    "phrases":  [
+                    {
+                        "it":  "Va bene",
+                        "en":  "Okay"
+                    },
+                    {
+                        "it":  "Perfetto",
+                        "en":  "Perfect"
+                    },
+                    {
+                        "it":  "Nessun problema",
+                        "en":  "No problem"
+                    },
+                    {
+                        "it":  "Di dove sei?",
+                        "en":  "Where are you from?"
+                    },
+                    {
+                        "it":  "Come va?",
+                        "en":  "How’s it going?"
+                    },
+                    {
+                        "it":  "Tutto bene",
+                        "en":  "All good"
+                    }
+                ]
+}
+

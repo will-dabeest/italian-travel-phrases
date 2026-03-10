@@ -1,0 +1,27 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Netlify Dev",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"netlify",
+				"dev"
+			],
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "Netlify Deploy Prod",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"netlify",
+				"deploy",
+				"--prod"
+			],
+			"group": "build"
+		}
+	]
+}

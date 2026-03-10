@@ -1,0 +1,82 @@
+﻿{
+    "categories":  [
+                       {
+                           "id":  "greetings",
+                           "name":  "Greetings \u0026 Politeness",
+                           "file":  "/categories/greetings.json",
+                           "count":  14
+                       },
+                       {
+                           "id":  "transportation",
+                           "name":  "Transportation",
+                           "file":  "/categories/transportation.json",
+                           "count":  9
+                       },
+                       {
+                           "id":  "food",
+                           "name":  "Food \u0026 Dining",
+                           "file":  "/categories/food.json",
+                           "count":  11
+                       },
+                       {
+                           "id":  "hotels",
+                           "name":  "Hotels \u0026 Check-In",
+                           "file":  "/categories/hotels.json",
+                           "count":  7
+                       },
+                       {
+                           "id":  "emergencies",
+                           "name":  "Emergencies",
+                           "file":  "/categories/emergencies.json",
+                           "count":  7
+                       },
+                       {
+                           "id":  "shopping",
+                           "name":  "Shopping \u0026 Money",
+                           "file":  "/categories/shopping.json",
+                           "count":  6
+                       },
+                       {
+                           "id":  "navigation",
+                           "name":  "Navigation \u0026 Daily Use",
+                           "file":  "/categories/navigation.json",
+                           "count":  7
+                       },
+                       {
+                           "id":  "social",
+                           "name":  "Social / Human Interaction",
+                           "file":  "/categories/social.json",
+                           "count":  6
+                       },
+                       {
+                           "id":  "coffee",
+                           "name":  "Coffee Culture",
+                           "file":  "/categories/coffee.json",
+                           "count":  4
+                       },
+                       {
+                           "id":  "trains",
+                           "name":  "Train Stations",
+                           "file":  "/categories/trains.json",
+                           "count":  3
+                       },
+                       {
+                           "id":  "restaurants_extra",
+                           "name":  "Restaurants Extra",
+                           "file":  "/categories/restaurants_extra.json",
+                           "count":  4
+                       },
+                       {
+                           "id":  "hotels_extra",
+                           "name":  "Hotels Extra",
+                           "file":  "/categories/hotels_extra.json",
+                           "count":  2
+                       },
+                       {
+                           "id":  "daily_extra",
+                           "name":  "Useful Everyday",
+                           "file":  "/categories/daily_extra.json",
+                           "count":  3
+                       }
+                   ]
+}

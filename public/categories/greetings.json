@@ -1,0 +1,63 @@
+﻿{
+    "id":  "greetings",
+    "name":  "Greetings \u0026 Politeness",
+    "phrases":  [
+                    {
+                        "it":  "Buongiorno",
+                        "en":  "Good morning"
+                    },
+                    {
+                        "it":  "Buonasera",
+                        "en":  "Good evening"
+                    },
+                    {
+                        "it":  "Salve",
+                        "en":  "Hello (polite)"
+                    },
+                    {
+                        "it":  "Ciao",
+                        "en":  "Hi / Bye"
+                    },
+                    {
+                        "it":  "Arrivederci",
+                        "en":  "Goodbye"
+                    },
+                    {
+                        "it":  "A dopo",
+                        "en":  "See you later"
+                    },
+                    {
+                        "it":  "Per favore",
+                        "en":  "Please"
+                    },
+                    {
+                        "it":  "Grazie mille",
+                        "en":  "Thank you very much"
+                    },
+                    {
+                        "it":  "Prego",
+                        "en":  "You’re welcome"
+                    },
+                    {
+                        "it":  "Mi scusi",
+                        "en":  "Excuse me"
+                    },
+                    {
+                        "it":  "Non fa niente",
+                        "en":  "It’s okay / No worries"
+                    },
+                    {
+                        "it":  "Parla inglese?",
+                        "en":  "Do you speak English?"
+                    },
+                    {
+                        "it":  "Parlo poco italiano",
+                        "en":  "I speak little Italian"
+                    },
+                    {
+                        "it":  "Può ripetere, per favore?",
+                        "en":  "Can you repeat, please?"
+                    }
+                ]
+}
+

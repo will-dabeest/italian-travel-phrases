@@ -1,0 +1,43 @@
+﻿{
+    "id":  "transportation",
+    "name":  "Transportation",
+    "phrases":  [
+                    {
+                        "it":  "Dov’è la stazione?",
+                        "en":  "Where is the train station?"
+                    },
+                    {
+                        "it":  "Quanto costa un biglietto?",
+                        "en":  "How much is a ticket?"
+                    },
+                    {
+                        "it":  "A che ora parte?",
+                        "en":  "What time does it leave?"
+                    },
+                    {
+                        "it":  "A che ora arriva?",
+                        "en":  "What time does it arrive?"
+                    },
+                    {
+                        "it":  "È questo il binario giusto?",
+                        "en":  "Is this the right platform?"
+                    },
+                    {
+                        "it":  "Vorrei un biglietto per Roma",
+                        "en":  "I’d like a ticket to Rome"
+                    },
+                    {
+                        "it":  "È incluso il posto?",
+                        "en":  "Is the seat included?"
+                    },
+                    {
+                        "it":  "Dove devo scendere?",
+                        "en":  "Where should I get off?"
+                    },
+                    {
+                        "it":  "Questo treno è diretto?",
+                        "en":  "Is this train direct?"
+                    }
+                ]
+}
+

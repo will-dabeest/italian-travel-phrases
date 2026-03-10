@@ -1,0 +1,35 @@
+﻿{
+    "id":  "navigation",
+    "name":  "Navigation \u0026 Daily Use",
+    "phrases":  [
+                    {
+                        "it":  "Dov’è il bagno?",
+                        "en":  "Where is the bathroom?"
+                    },
+                    {
+                        "it":  "È lontano?",
+                        "en":  "Is it far?"
+                    },
+                    {
+                        "it":  "È vicino?",
+                        "en":  "Is it close?"
+                    },
+                    {
+                        "it":  "A sinistra",
+                        "en":  "To the left"
+                    },
+                    {
+                        "it":  "A destra",
+                        "en":  "To the right"
+                    },
+                    {
+                        "it":  "Sempre dritto",
+                        "en":  "Straight ahead"
+                    },
+                    {
+                        "it":  "Quanto tempo ci vuole?",
+                        "en":  "How long does it take?"
+                    }
+                ]
+}
+

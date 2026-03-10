@@ -1,0 +1,51 @@
+﻿{
+    "id":  "food",
+    "name":  "Food \u0026 Dining",
+    "phrases":  [
+                    {
+                        "it":  "Un tavolo per due",
+                        "en":  "A table for two"
+                    },
+                    {
+                        "it":  "Possiamo sederci fuori?",
+                        "en":  "Can we sit outside?"
+                    },
+                    {
+                        "it":  "Il menù, per favore",
+                        "en":  "The menu, please"
+                    },
+                    {
+                        "it":  "Che cosa consiglia?",
+                        "en":  "What do you recommend?"
+                    },
+                    {
+                        "it":  "Vorrei questo",
+                        "en":  "I’d like this"
+                    },
+                    {
+                        "it":  "Senza glutine",
+                        "en":  "Gluten-free"
+                    },
+                    {
+                        "it":  "Senza lattosio",
+                        "en":  "Lactose-free"
+                    },
+                    {
+                        "it":  "Sono allergico a…",
+                        "en":  "I’m allergic to…"
+                    },
+                    {
+                        "it":  "Un litro di acqua naturale/frizzante",
+                        "en":  "A liter of still/sparkling water"
+                    },
+                    {
+                        "it":  "Possiamo avere il conto?",
+                        "en":  "Can we have the check?"
+                    },
+                    {
+                        "it":  "Separato, per favore",
+                        "en":  "Separate checks"
+                    }
+                ]
+}
+

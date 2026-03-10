@@ -1,0 +1,23 @@
+﻿{
+    "id":  "coffee",
+    "name":  "Coffee Culture",
+    "phrases":  [
+                    {
+                        "it":  "Un espresso",
+                        "en":  "An espresso"
+                    },
+                    {
+                        "it":  "Un macchiato",
+                        "en":  "A macchiato"
+                    },
+                    {
+                        "it":  "Un cappuccino",
+                        "en":  "A cappuccino"
+                    },
+                    {
+                        "it":  "Da portare via",
+                        "en":  "To go / take away"
+                    }
+                ]
+}
+

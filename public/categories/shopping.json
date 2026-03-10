@@ -1,0 +1,31 @@
+﻿{
+    "id":  "shopping",
+    "name":  "Shopping \u0026 Money",
+    "phrases":  [
+                    {
+                        "it":  "Quanto costa?",
+                        "en":  "How much is it?"
+                    },
+                    {
+                        "it":  "È troppo caro",
+                        "en":  "It’s too expensive"
+                    },
+                    {
+                        "it":  "Avete una taglia più grande/piccola?",
+                        "en":  "Do you have a larger/smaller size?"
+                    },
+                    {
+                        "it":  "Posso provarlo?",
+                        "en":  "Can I try it on?"
+                    },
+                    {
+                        "it":  "Posso pagare con carta?",
+                        "en":  "Can I pay by card?"
+                    },
+                    {
+                        "it":  "Avete qualcosa di simile?",
+                        "en":  "Do you have something similar?"
+                    }
+                ]
+}
+

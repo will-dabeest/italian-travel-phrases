@@ -1,0 +1,19 @@
+﻿{
+    "id":  "daily_extra",
+    "name":  "Useful Everyday",
+    "phrases":  [
+                    {
+                        "it":  "Funziona?",
+                        "en":  "Does it work?"
+                    },
+                    {
+                        "it":  "Mi può aiutare?",
+                        "en":  "Can you help me?"
+                    },
+                    {
+                        "it":  "Sto solo guardando",
+                        "en":  "I’m just looking"
+                    }
+                ]
+}
+

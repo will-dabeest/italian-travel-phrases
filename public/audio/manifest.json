@@ -1,0 +1,116 @@
+{
+  "clips": [
+    {
+      "text": "Buongiorno",
+      "src": "/audio/buongiorno.ogg",
+      "source": "Wikimedia Commons: File:It-buongiorno.ogg",
+      "license": "CC BY 3.0 US",
+      "attribution": "Marta Carbone, Association Shtooka (Shtooka Project)"
+    },
+    {
+      "text": "Buonasera",
+      "src": "/audio/buonasera.wav",
+      "source": "Wikimedia Commons: File:LL-Q652 (ita)-XANA000-buonasera.wav",
+      "license": "CC0",
+      "attribution": "Speaker/Recorder: XANA000 (Lingua Libre)"
+    },
+    {
+      "text": "Salve",
+      "src": "/audio/salve.wav",
+      "source": "Wikimedia Commons: File:LL-Q652 (ita)-XANA000-salve.wav",
+      "license": "CC0",
+      "attribution": "Speaker/Recorder: XANA000 (Lingua Libre)"
+    },
+    {
+      "text": "Ciao",
+      "src": "/audio/ciao.wav",
+      "source": "Wikimedia Commons: File:LL-Q652 (ita)-XANA000-ciao.wav",
+      "license": "CC0",
+      "attribution": "Speaker/Recorder: XANA000 (Lingua Libre)"
+    },
+    {
+      "text": "Arrivederci",
+      "src": "/audio/arrivederci.ogg",
+      "source": "Wikimedia Commons: File:It-arrivederci.ogg",
+      "license": "CC BY-SA 2.0",
+      "attribution": "Wikimedia Commons contributor (see file history)"
+    },
+    {
+      "text": "Per favore",
+      "src": "/audio/per_favore.ogg",
+      "source": "Wikimedia Commons: File:It-per favore.ogg",
+      "license": "CC BY 2.0",
+      "attribution": "Wikimedia Commons contributor (see file history)"
+    },
+    {
+      "text": "Grazie mille",
+      "src": "/audio/grazie_mille.wav",
+      "source": "Wikimedia Commons: File:LL-Q652 (ita)-XANA000-grazie mille.wav",
+      "license": "CC0",
+      "attribution": "Speaker/Recorder: XANA000 (Lingua Libre)"
+    },
+    {
+      "text": "Prego",
+      "src": "/audio/prego.wav",
+      "source": "Wikimedia Commons: File:LL-Q652 (ita)-XANA000-prego.wav",
+      "license": "CC0",
+      "attribution": "Speaker/Recorder: XANA000 (Lingua Libre)"
+    },
+    {
+      "text": "Aiuto",
+      "src": "/audio/aiuto.wav",
+      "source": "Wikimedia Commons: File:LL-Q652 (ita)-XANA000-aiuto.wav",
+      "license": "CC0",
+      "attribution": "Speaker/Recorder: XANA000 (Lingua Libre)"
+    },
+    {
+      "text": "Perfetto",
+      "src": "/audio/perfetto.wav",
+      "source": "Wikimedia Commons: File:LL-Q652 (ita)-Happypheasant-perfetto.wav",
+      "license": "CC BY-SA 4.0",
+      "attribution": "Speaker/Recorder: Happypheasant (Lingua Libre)"
+    },
+    {
+      "text": "Va bene",
+      "src": "/audio/va_bene.wav",
+      "source": "Wikimedia Commons: File:LL-Q652 (ita)-Happypheasant-va bene.wav",
+      "license": "CC BY-SA 4.0",
+      "attribution": "Speaker/Recorder: Happypheasant (Lingua Libre)"
+    },
+    {
+      "text": "A sinistra",
+      "src": "/audio/a_sinistra.wav",
+      "source": "Wikimedia Commons: File:LL-Q652 (ita)-XANA000-a sinistra.wav",
+      "license": "CC0",
+      "attribution": "Speaker/Recorder: XANA000 (Lingua Libre)"
+    },
+    {
+      "text": "A destra",
+      "src": "/audio/a_destra.wav",
+      "source": "Wikimedia Commons: File:LL-Q652 (ita)-LangPao-a destra.wav",
+      "license": "CC BY-SA 4.0",
+      "attribution": "Speaker/Recorder: LangPao (Lingua Libre)"
+    },
+    {
+      "text": "Menù",
+      "src": "/audio/menu.wav",
+      "source": "Wikimedia Commons: File:LL-Q652 (ita)-Happypheasant-menù.wav",
+      "license": "CC BY-SA 4.0",
+      "attribution": "Speaker/Recorder: Happypheasant (Lingua Libre)"
+    },
+    {
+      "text": "Taxi",
+      "src": "/audio/taxi.wav",
+      "source": "Wikimedia Commons: File:LL-Q652 (ita)-Happypheasant-taxi.wav",
+      "license": "CC BY-SA 4.0",
+      "attribution": "Speaker/Recorder: Happypheasant (Lingua Libre)"
+    },
+    {
+      "text": "Parla inglese?",
+      "src": "/audio/parla_inglese.ogg",
+      "source": "Wikimedia Commons: File:Parla inglese.ogg",
+      "license": "CC BY-SA 4.0",
+      "attribution": "Ph7five (Own work)"
+    }
+  ]
+}

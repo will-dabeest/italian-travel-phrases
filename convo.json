@@ -1,0 +1,309 @@
+{
+  "categories": [
+    {
+      "id": "greetings_politeness",
+      "name": "Greetings & Politeness",
+      "phrases": [
+        {
+          "it": "Buongiorno",
+          "en": "Good morning",
+          "responses": ["Buongiorno", "Ciao"],
+          "responses_en": ["Good morning", "Hi / Bye"]
+        },
+        {
+          "it": "Buonasera",
+          "en": "Good evening",
+          "responses": ["Buonasera"],
+          "responses_en": ["Good evening"]
+        },
+        {
+          "it": "Ciao",
+          "en": "Hi / Bye",
+          "responses": ["Ciao"],
+          "responses_en": ["Hi / Bye"]
+        },
+        {
+          "it": "Arrivederci",
+          "en": "Goodbye",
+          "responses": ["Arrivederci", "Ciao"],
+          "responses_en": ["Goodbye", "Bye"]
+        },
+        {
+          "it": "Parla inglese?",
+          "en": "Do you speak English?",
+          "responses": ["Sì, un po’", "No, mi dispiace", "Parlo poco italiano"],
+          "responses_en": ["Yes, a little", "No, I'm sorry", "I speak little Italian"]
+        },
+        {
+          "it": "Mi scusi",
+          "en": "Excuse me",
+          "responses": ["Nessun problema", "Prego"],
+          "responses_en": ["No problem", "You're welcome"]
+        },
+        {
+          "it": "Tutto bene?",
+          "en": "Everything okay?",
+          "responses": ["Sì, tutto bene", "Sì, grazie"],
+          "responses_en": ["Yes, all good", "Yes, thank you"]
+        }
+      ]
+    },
+
+    {
+      "id": "restaurant",
+      "name": "Restaurants & Food",
+      "phrases": [
+        {
+          "it": "Avete una prenotazione?",
+          "en": "Do you have a reservation?",
+          "responses": ["Sì, a nome Will", "No, c’è posto?"],
+          "responses_en": ["Yes, under the name Will", "No, is there space?"]
+        },
+        {
+          "it": "Quanti siete?",
+          "en": "How many are you?",
+          "responses": ["Due", "Tre"],
+          "responses_en": ["Two", "Three"]
+        },
+        {
+          "it": "Cosa desidera?",
+          "en": "What would you like?",
+          "responses": ["Prendo...", "Vorrei..."],
+          "responses_en": ["I'll have...", "I would like..."]
+        },
+        {
+          "it": "Da bere?",
+          "en": "Something to drink?",
+          "responses": ["Acqua naturale", "Acqua frizzante", "Vino bianco"],
+          "responses_en": ["Still water", "Sparkling water", "White wine"]
+        },
+        {
+          "it": "Tutto bene?",
+          "en": "Everything okay?",
+          "responses": ["Sì, tutto bene", "Perfetto, grazie"],
+          "responses_en": ["Yes, all good", "Perfect, thank you"]
+        },
+        {
+          "it": "Il conto?",
+          "en": "The check?",
+          "responses": ["Sì, grazie", "Per favore"],
+          "responses_en": ["Yes, thank you", "Please"]
+        }
+      ]
+    },
+
+    {
+      "id": "coffee",
+      "name": "Coffee Bars",
+      "phrases": [
+        {
+          "it": "Cosa prendi?",
+          "en": "What will you have?",
+          "responses": ["Un cappuccino", "Un espresso", "Un macchiato"],
+          "responses_en": ["A cappuccino", "An espresso", "A macchiato"]
+        },
+        {
+          "it": "Qui o da portare via?",
+          "en": "Here or to go?",
+          "responses": ["Qui", "Da portare via"],
+          "responses_en": ["Here", "To go"]
+        },
+        {
+          "it": "Zucchero?",
+          "en": "Sugar?",
+          "responses": ["No grazie", "Sì, grazie"],
+          "responses_en": ["No thanks", "Yes, thanks"]
+        }
+      ]
+    },
+
+    {
+      "id": "transport",
+      "name": "Transportation",
+      "phrases": [
+        {
+          "it": "Dove deve andare?",
+          "en": "Where do you need to go?",
+          "responses": ["A Firenze", "A Venezia"],
+          "responses_en": ["To Florence", "To Venice"]
+        },
+        {
+          "it": "Serve la prenotazione",
+          "en": "A reservation is required",
+          "responses": ["Va bene, come faccio?", "Ok, grazie"],
+          "responses_en": ["Okay, how do I do that?", "Okay, thank you"]
+        },
+        {
+          "it": "Il treno è in ritardo",
+          "en": "The train is delayed",
+          "responses": ["Capisco", "Grazie"],
+          "responses_en": ["I understand", "Thank you"]
+        },
+        {
+          "it": "Cambia binario",
+          "en": "The platform has changed",
+          "responses": ["Grazie", "Va bene"],
+          "responses_en": ["Thank you", "Alright"]
+        }
+      ]
+    },
+
+    {
+      "id": "hotel",
+      "name": "Hotels & Check-In",
+      "phrases": [
+        {
+          "it": "Un documento, per favore",
+          "en": "ID/passport, please",
+          "responses": ["Certo", "Un attimo"],
+          "responses_en": ["Of course", "One moment"]
+        },
+        {
+          "it": "La camera non è ancora pronta",
+          "en": "The room is not ready yet",
+          "responses": ["Va bene", "Nessun problema"],
+          "responses_en": ["Okay", "No problem"]
+        },
+        {
+          "it": "Le serve aiuto con i bagagli?",
+          "en": "Do you need help with your bags?",
+          "responses": ["No grazie, tutto a posto", "Sì, grazie"],
+          "responses_en": ["No thanks, all good", "Yes, thank you"]
+        }
+      ]
+    },
+
+    {
+      "id": "directions",
+      "name": "Directions & Navigation",
+      "phrases": [
+        {
+          "it": "È vicino",
+          "en": "It's close",
+          "responses": ["Grazie"],
+          "responses_en": ["Thank you"]
+        },
+        {
+          "it": "È lontano",
+          "en": "It's far",
+          "responses": ["Ok, grazie"],
+          "responses_en": ["Okay, thank you"]
+        },
+        {
+          "it": "Mi segua",
+          "en": "Follow me",
+          "responses": ["Grazie", "Va bene"],
+          "responses_en": ["Thank you", "Okay"]
+        },
+        {
+          "it": "Attenzione!",
+          "en": "Watch out!",
+          "responses": ["Scusi!", "Grazie!"],
+          "responses_en": ["Sorry!", "Thank you!"]
+        }
+      ]
+    },
+
+    {
+      "id": "emergencies",
+      "name": "Emergencies",
+      "phrases": [
+        {
+          "it": "Sta bene?",
+          "en": "Are you okay?",
+          "responses": ["Sì, grazie", "No, ho bisogno di aiuto"],
+          "responses_en": ["Yes, thank you", "No, I need help"]
+        },
+        {
+          "it": "Ha bisogno di un medico?",
+          "en": "Do you need a doctor?",
+          "responses": ["Forse", "Sì, per favore"],
+          "responses_en": ["Maybe", "Yes, please"]
+        }
+      ]
+    },
+
+    {
+      "id": "shopping",
+      "name": "Shopping & Payments",
+      "phrases": [
+        {
+          "it": "Posso aiutarla?",
+          "en": "Can I help you?",
+          "responses": ["Sto solo guardando", "Sì, cerco..."],
+          "responses_en": ["I'm just looking", "Yes, I'm looking for..."]
+        },
+        {
+          "it": "Vuole provare?",
+          "en": "Would you like to try it on?",
+          "responses": ["Sì, grazie", "No, va bene così"],
+          "responses_en": ["Yes, thank you", "No, it's fine as is"]
+        }
+      ]
+    },
+
+    {
+      "id": "venice",
+      "name": "Venice",
+      "phrases": [
+        {
+          "it": "Il vaporetto arriva tra poco",
+          "en": "The waterbus arrives soon",
+          "responses": ["Ok, grazie"],
+          "responses_en": ["Okay, thank you"]
+        },
+        {
+          "it": "C’è acqua alta oggi",
+          "en": "There's high tide today",
+          "responses": ["Capito, grazie"],
+          "responses_en": ["Got it, thank you"]
+        }
+      ]
+    },
+
+    {
+      "id": "bologna",
+      "name": "Bologna",
+      "phrases": [
+        {
+          "it": "È sotto i portici",
+          "en": "It's under the porticoes",
+          "responses": ["Perfetto, grazie"],
+          "responses_en": ["Perfect, thank you"]
+        }
+      ]
+    },
+
+    {
+      "id": "florence",
+      "name": "Florence",
+      "phrases": [
+        {
+          "it": "Il Duomo è da quella parte",
+          "en": "The Duomo is that way",
+          "responses": ["Grazie"],
+          "responses_en": ["Thank you"]
+        },
+        {
+          "it": "Musei completi per oggi",
+          "en": "Museums are fully booked today",
+          "responses": ["Capisco, grazie"],
+          "responses_en": ["I understand, thank you"]
+        }
+      ]
+    },
+
+    {
+      "id": "cinque_terre",
+      "name": "Cinque Terre",
+      "phrases": [
+        {
+          "it": "Il sentiero è chiuso",
+          "en": "The trail is closed",
+          "responses": ["Ok, grazie", "C’è un percorso alternativo?"],
+          "responses_en": ["Okay, thank you", "Is there an alternative route?"]
+        }
+      ]
+    }
+  ]
+}
