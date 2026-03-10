@@ -72,6 +72,33 @@ npm run build
 npm run preview
 ```
 
+## Docker
+
+Quick start (simplest):
+
+```bash
+npm run docker:up
+```
+
+Then open `http://localhost:8080`.
+Stop:
+
+```bash
+npm run docker:down
+```
+
+Manual Docker commands:
+
+```bash
+docker build -t italian-travel-phrase-trainer .
+docker run --rm -p 8080:80 italian-travel-phrase-trainer
+```
+
+Recommendation:
+
+- For Netlify deployment, Docker is not required.
+- For consistent local runtime and environment parity across machines/CI, Docker is a good option.
+
 ## Netlify Deployment
 
 ```bash

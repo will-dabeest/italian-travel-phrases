@@ -1,0 +1,6 @@
+services:
+  app:
+    build: .
+    image: italian-travel-phrase-trainer
+    ports:
+      - "8080:80"
