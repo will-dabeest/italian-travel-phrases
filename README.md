@@ -93,6 +93,8 @@ Notes:
 - React scaffold entry: `react.html`
 - React scaffold source: `react/`
 - React build output: `dist-react`
+- Migration playbook: `REACT_MIGRATION.md`
+- Parity validation checklist: `REACT_PARITY_CHECKLIST.md`
 
 ## Docker
 

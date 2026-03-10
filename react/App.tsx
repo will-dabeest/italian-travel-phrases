@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { RoadmapView } from './views/RoadmapView';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -35,7 +36,7 @@ export function App(): React.JSX.Element {
     return () => window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
   }, []);
 
-  if (view === 'roadmap') return <PlaceholderView title="Roadmap" onBack={() => setView('landing')} />;
+  if (view === 'roadmap') return <RoadmapView onBack={() => setView('landing')} />;
   if (view === 'detailed') return <PlaceholderView title="Practice" onBack={() => setView('landing')} />;
   if (view === 'phrases') return <PlaceholderView title="Phrases" onBack={() => setView('landing')} />;
 

@@ -83,3 +83,90 @@ body {
 .is-hidden {
   display: none;
 }
+
+.react-card--roadmap {
+  width: min(1080px, 94vw);
+  display: grid;
+  gap: 14px;
+}
+
+.roadmap-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip.is-active {
+  border-color: #4a7be0;
+  background: #2b3f6a;
+}
+
+.roadmap-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 14px;
+}
+
+.roadmap-list {
+  display: grid;
+  gap: 8px;
+}
+
+.roadmap-cat {
+  border-radius: 10px;
+  border: 1px solid #353945;
+  background: #232833;
+  color: #f7f7f7;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.roadmap-cat.is-active {
+  border-color: #4a7be0;
+}
+
+.phrase-list-react {
+  display: grid;
+  gap: 8px;
+  max-height: 420px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.phrase-item-react {
+  border: 1px solid #353945;
+  border-radius: 10px;
+  background: #20242c;
+  padding: 10px 12px;
+}
+
+.phrase-it-react {
+  margin: 0;
+  font-weight: 600;
+}
+
+.phrase-en-react {
+  margin: 4px 0 0;
+  color: #ced4df;
+}
+
+.message {
+  margin: 0;
+  color: #ff9ea3;
+}
+
+@media (max-width: 900px) {
+  .roadmap-grid {
+    grid-template-columns: 1fr;
+  }
+}
