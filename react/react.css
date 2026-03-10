@@ -40,3 +40,46 @@ body {
   margin: 0;
   padding-left: 18px;
 }
+
+.react-card--landing {
+  display: grid;
+  gap: 14px;
+}
+
+.section-note {
+  color: #c9ced8;
+}
+
+.landing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.btn {
+  border-radius: 10px;
+  border: 1px solid #353945;
+  background: #232833;
+  color: #f7f7f7;
+  padding: 10px 14px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn--accent {
+  background: #3d6ed3;
+  border-color: #4a7be0;
+}
+
+.btn--ghost {
+  background: transparent;
+}
+
+.is-hidden {
+  display: none;
+}
