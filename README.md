@@ -128,6 +128,15 @@ Recommendation:
 - For Netlify deployment, Docker is not required.
 - For consistent local runtime and environment parity across machines/CI, Docker is a good option.
 
+### Automated Docker Publish (GHCR)
+
+- Workflow: `.github/workflows/publish-docker-ghcr.yml`
+- Trigger: only when a pull request is merged into `main`
+- Path guard: skipped when merged PR changes are docs/workflow-only (no publish-relevant runtime/build files)
+- Safety gate: publish runs only after parity/test checks pass (`ci:parity:gates`, checklist validation, Step 2 + Step 3 parity tests)
+- Registry target: `ghcr.io/<your-github-owner>/italian-travel-phrase-trainer`
+- Tags pushed: `latest` and commit SHA tag (`sha-<commit>`)
+
 ## Netlify Deployment
 
 ```bash
