@@ -78,7 +78,7 @@ Proceed to Step 2.
 
 ---
 
-## Step 2 — Landing View Parity in React
+## Step 2 — Landing Parity
 
 ### Goal
 React landing view mirrors vanilla CTA structure and install prompt handling.
@@ -100,7 +100,7 @@ Proceed to Step 3.
 
 ---
 
-## Step 3 — Roadmap Data Skeleton in React
+## Step 3 — Roadmap Data Skeleton Parity
 
 ### Goal
 React roadmap loads live manifest/category phrase files and displays them.
@@ -132,7 +132,7 @@ Make React roadmap functionally equivalent to vanilla roadmap.
 
 ### Completion Test
 - For identical localStorage fixtures, React and vanilla show same mode/category/phrase availability and pass states.
-- Phase 4 checks in `REACT_PARITY_CHECKLIST.md` are green.
+- Step 4 checks in `REACT_PARITY_CHECKLIST.md` are green.
 
 ### If Already Satisfied
 Proceed to Step 5.
@@ -152,14 +152,14 @@ Migrate detailed practice interactions with behavior parity.
 
 ### Completion Test
 - Same inputs yield same phrase ordering/selection outcomes as vanilla.
-- Phase 5 checks in `REACT_PARITY_CHECKLIST.md` are green.
+- Step 5 checks in `REACT_PARITY_CHECKLIST.md` are green.
 
 ### If Already Satisfied
 Proceed to Step 6.
 
 ---
 
-## Step 6 — Pronunciation Flow Parity (Roadmap + Detailed)
+## Step 6 — Pronunciation Flow Parity
 
 ### Goal
 Preserve microphone scoring flow and state transitions exactly.
@@ -172,14 +172,14 @@ Preserve microphone scoring flow and state transitions exactly.
 
 ### Completion Test
 - For same phrase+transcript inputs, React and vanilla produce matching score labels and state updates.
-- Phase 6 checks in `REACT_PARITY_CHECKLIST.md` are green.
+- Step 6 checks in `REACT_PARITY_CHECKLIST.md` are green.
 
 ### If Already Satisfied
 Proceed to Step 7.
 
 ---
 
-## Step 7 — Phrases Mode Parity (Prompt/Response/Convo)
+## Step 7 — Phrases Mode Parity
 
 ### Goal
 Migrate full staged phrases mode with identical unlock/progression behavior.
@@ -193,7 +193,7 @@ Migrate full staged phrases mode with identical unlock/progression behavior.
 
 ### Completion Test
 - Stage/category unlock progression matches vanilla on same fixtures.
-- Phase 7 checks in `REACT_PARITY_CHECKLIST.md` are green.
+- Step 7 checks in `REACT_PARITY_CHECKLIST.md` are green.
 
 ### If Already Satisfied
 Proceed to Step 8.
@@ -214,7 +214,7 @@ Migrate system-level behavior and persistence parity.
 
 ### Completion Test
 - Settings/reset/pwa behavior matches vanilla on same fixture states.
-- Phase 8 checks in `REACT_PARITY_CHECKLIST.md` are green.
+- Step 8 checks in `REACT_PARITY_CHECKLIST.md` are green.
 
 ### If Already Satisfied
 Proceed to Step 9.
@@ -251,6 +251,10 @@ Strategy layers:
 - Deterministic localStorage fixtures for side-by-side comparison.
 - Per-step parity checks before moving to next step.
 - Build/runtime gates each cycle.
+
+Automation rule:
+- Each migrated step MUST add/update tagged Playwright coverage (`@stepN`) and corresponding CI command (`ci:parity:stepN`).
+- Pull requests MUST pass all declared `ci:parity:stepN` jobs.
 
 Minimum gates (every step):
 - `npm run check`
@@ -321,6 +325,7 @@ React migration path:
 - `npm run dev:react`
 - `npm run build:react`
 - `npm run preview:react`
+- `npm run test:parity:ui`
 
 Global check:
 - `npm run check`

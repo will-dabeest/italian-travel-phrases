@@ -28,6 +28,7 @@ For each test case:
 - [ ] `npm run check` passes.
 - [ ] `npm run build` passes.
 - [ ] `npm run build:react` passes.
+- [ ] `npm run test:parity:ui` passes for all declared step tags in the parity test suite.
 - [ ] No unhandled console errors in migrated flows.
 - [ ] No unhandled promise rejections in migrated flows.
 

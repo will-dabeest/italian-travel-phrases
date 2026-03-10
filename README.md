@@ -96,6 +96,11 @@ Notes:
 - Migration playbook: `REACT_MIGRATION.md`
 - Parity validation checklist: `REACT_PARITY_CHECKLIST.md`
 
+Step-based parity commands:
+- Run all declared parity step tests: `npm run ci:parity:all-steps`
+- Run Step 2 — Landing Parity: `npm run ci:parity:step2`
+- Run Step 3 — Roadmap Data Skeleton Parity: `npm run ci:parity:step3`
+
 ## Docker
 
 Quick start (simplest):

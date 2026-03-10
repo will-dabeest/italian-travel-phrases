@@ -1,0 +1,65 @@
+name: React Parity CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  static-parity-checks:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: Automated parity gates
+            command: npm run ci:parity:gates
+          - name: Validate parity checklist structure
+            command: npm run ci:parity:checklist
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run check
+        run: ${{ matrix.command }}
+
+  ui-parity-steps:
+    name: ${{ matrix.stepLabel }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - stepLabel: Step 2 — Landing Parity
+            command: npm run ci:parity:step2
+          - stepLabel: Step 3 — Roadmap Data Skeleton Parity
+            command: npm run ci:parity:step3
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run step parity tests (${{ matrix.stepLabel }})
+        run: ${{ matrix.command }}
+
