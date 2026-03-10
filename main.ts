@@ -60,6 +60,8 @@ import {
   renderRoadmapView
 } from './features/roadmapView';
 import { handlePhrasesCategorySelectionClick, handlePhrasesNavigationClick } from './features/phrasesView';
+import { handlePhrasesMatchSelectionClick, handlePhrasesPracticeClick } from './features/phrasesPractice';
+import { handleDetailedPracticeClick } from './features/detailedPractice';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -1196,6 +1198,11 @@ function saveAndRender(): void {
   render();
 }
 
+function handleAudioPlaybackError(error: unknown): void {
+  runtime.message = error instanceof Error ? error.message : ERROR_PLAYBACK_UNAVAILABLE;
+  render();
+}
+
 const roadmapAdapter = {
   setViewModeRoadmap(): void {
     runtime.viewMode = 'roadmap';
@@ -1340,63 +1347,34 @@ function handleSelectionClick(target: HTMLElement): boolean {
     return true;
   }
 
-  const promptAudioBtn = target.closest<HTMLElement>('[data-prompt-match-audio]');
-  if (promptAudioBtn?.dataset.promptMatchAudio) {
-    const unitId = promptAudioBtn.dataset.promptMatchAudio;
-    if (!runtime.promptMatchedIds.has(unitId)) {
-      const category = getPromptCategories().find((item) => item.id === runtime.promptCategoryId);
-      const unit = category?.units.find((item) => item.id === unitId);
-      if (unit) {
-        speakItalian(unit.it).catch((error) => {
-          runtime.message = error instanceof Error ? error.message : ERROR_PLAYBACK_UNAVAILABLE;
-          render();
-        });
-      }
-      runtime.promptMatchAudioSelected = unitId;
-      handlePromptMatchSelection();
-      render();
-    }
-    return true;
-  }
-
-  const promptEnglishBtn = target.closest<HTMLElement>('[data-prompt-match-english]');
-  if (promptEnglishBtn?.dataset.promptMatchEnglish) {
-    const unitId = promptEnglishBtn.dataset.promptMatchEnglish;
-    if (!runtime.promptMatchedIds.has(unitId)) {
-      runtime.promptMatchEnglishSelected = unitId;
-      handlePromptMatchSelection();
-      render();
-    }
-    return true;
-  }
-
-  const responseAudioBtn = target.closest<HTMLElement>('[data-response-match-audio]');
-  if (responseAudioBtn?.dataset.responseMatchAudio) {
-    const unitId = responseAudioBtn.dataset.responseMatchAudio;
-    if (!runtime.responseMatchedIds.has(unitId)) {
-      const category = getResponseCategories().find((item) => item.id === runtime.responseCategoryId);
-      const unit = category?.units.find((item) => item.id === unitId);
-      if (unit) {
-        speakItalian(unit.it).catch((error) => {
-          runtime.message = error instanceof Error ? error.message : ERROR_PLAYBACK_UNAVAILABLE;
-          render();
-        });
-      }
-      runtime.responseMatchAudioSelected = unitId;
-      handleResponseMatchSelection();
-      render();
-    }
-    return true;
-  }
-
-  const responseEnglishBtn = target.closest<HTMLElement>('[data-response-match-english]');
-  if (responseEnglishBtn?.dataset.responseMatchEnglish) {
-    const unitId = responseEnglishBtn.dataset.responseMatchEnglish;
-    if (!runtime.responseMatchedIds.has(unitId)) {
-      runtime.responseMatchEnglishSelected = unitId;
-      handleResponseMatchSelection();
-      render();
-    }
+  if (
+    handlePhrasesMatchSelectionClick({
+      target,
+      promptCategoryId: runtime.promptCategoryId,
+      responseCategoryId: runtime.responseCategoryId,
+      promptMatchedIds: runtime.promptMatchedIds,
+      responseMatchedIds: runtime.responseMatchedIds,
+      getPromptCategories,
+      getResponseCategories,
+      speakItalian,
+      onPlaybackError: handleAudioPlaybackError,
+      setPromptMatchAudioSelected: (unitId) => {
+        runtime.promptMatchAudioSelected = unitId;
+      },
+      setPromptMatchEnglishSelected: (unitId) => {
+        runtime.promptMatchEnglishSelected = unitId;
+      },
+      setResponseMatchAudioSelected: (unitId) => {
+        runtime.responseMatchAudioSelected = unitId;
+      },
+      setResponseMatchEnglishSelected: (unitId) => {
+        runtime.responseMatchEnglishSelected = unitId;
+      },
+      onPromptMatchSelection: handlePromptMatchSelection,
+      onResponseMatchSelection: handleResponseMatchSelection,
+      render
+    })
+  ) {
     return true;
   }
 
@@ -1408,33 +1386,60 @@ function handlePracticeClick(target: HTMLElement): boolean {
     return true;
   }
 
-  const nextExerciseBtn = target.closest<HTMLElement>('[data-next-stage][data-next-category]');
-  if (nextExerciseBtn?.dataset.nextStage && nextExerciseBtn.dataset.nextCategory) {
-    const nextStage = nextExerciseBtn.dataset.nextStage;
-    if (nextStage === 'prompt' || nextStage === 'response' || nextStage === 'convo') {
-      goToPhrasesExerciseTarget({ stage: nextStage, categoryId: nextExerciseBtn.dataset.nextCategory });
-      render();
-      return true;
-    }
-  }
-
-  if (target.closest('#speak-btn')) {
-    const selected = runtime.phraseMap.get(runtime.selectedPhraseId);
-    if (selected) {
-      speakItalian(selected.it).catch((error) => {
-        runtime.message = error instanceof Error ? error.message : ERROR_PLAYBACK_UNAVAILABLE;
-        render();
-      });
-    }
+  if (
+    handlePhrasesPracticeClick({
+      target,
+      goToPhrasesExerciseTarget,
+      getPromptCategories,
+      getResponseCategories,
+      getConvoCategories,
+      promptCategoryId: runtime.promptCategoryId,
+      promptLearnIndex: runtime.promptLearnIndex,
+      setPromptLearnIndex: (index) => {
+        runtime.promptLearnIndex = index;
+      },
+      setPromptPhaseMatch: () => {
+        runtime.promptPhase = 'match';
+      },
+      responseCategoryId: runtime.responseCategoryId,
+      responseLearnIndex: runtime.responseLearnIndex,
+      setResponseLearnIndex: (index) => {
+        runtime.responseLearnIndex = index;
+      },
+      setResponsePhaseMatch: () => {
+        runtime.responsePhase = 'match';
+      },
+      convoCategoryId: runtime.convoCategoryId,
+      convoSpeakIndex: runtime.convoSpeakIndex,
+      speakItalian,
+      onPlaybackError: handleAudioPlaybackError,
+      runResponseSpeakingChallenge: () => {
+        void handleResponseSpeakingChallenge();
+      },
+      runConvoSpeakingChallenge: () => {
+        void handleConvoSpeakingChallenge();
+      },
+      setMessage: roadmapAdapter.setMessage,
+      render
+    })
+  ) {
     return true;
   }
 
-  if (target.closest('#record-btn')) {
-    handlePronunciationPractice().catch(() => {
-      runtime.message = ERROR_RECORDING_UNEXPECTED;
-      runtime.recording = false;
-      render();
-    });
+  if (
+    handleDetailedPracticeClick({
+      target,
+      selectedPhrase: runtime.phraseMap.get(runtime.selectedPhraseId),
+      speakItalian,
+      onPlaybackError: handleAudioPlaybackError,
+      handlePronunciationPractice,
+      onRecordingError: () => {
+        runtime.message = ERROR_RECORDING_UNEXPECTED;
+        runtime.recording = false;
+        render();
+      }
+    })
+  ) {
     return true;
   }
 
@@ -1442,10 +1447,7 @@ function handlePracticeClick(target: HTMLElement): boolean {
     const category = getPromptCategories().find((item) => item.id === runtime.promptCategoryId);
     const unit = category?.units[runtime.promptLearnIndex];
     if (unit) {
-      speakItalian(unit.it).catch((error) => {
-        runtime.message = error instanceof Error ? error.message : ERROR_PLAYBACK_UNAVAILABLE;
-        render();
-      });
+      speakItalian(unit.it).catch(handleAudioPlaybackError);
     }
     return true;
   }
@@ -1465,10 +1467,7 @@ function handlePracticeClick(target: HTMLElement): boolean {
     const category = getResponseCategories().find((item) => item.id === runtime.responseCategoryId);
     const unit = category?.units[runtime.responseLearnIndex];
     if (unit) {
-      speakItalian(unit.it).catch((error) => {
-        runtime.message = error instanceof Error ? error.message : ERROR_PLAYBACK_UNAVAILABLE;
-        render();
-      });
+      speakItalian(unit.it).catch(handleAudioPlaybackError);
     }
     return true;
   }
@@ -1493,10 +1492,7 @@ function handlePracticeClick(target: HTMLElement): boolean {
     const category = getConvoCategories().find((item) => item.id === runtime.convoCategoryId);
     const unit = category?.units[runtime.convoSpeakIndex];
     if (unit) {
-      speakItalian(unit.promptIt).catch((error) => {
-        runtime.message = error instanceof Error ? error.message : ERROR_PLAYBACK_UNAVAILABLE;
-        render();
-      });
+      speakItalian(unit.promptIt).catch(handleAudioPlaybackError);
     }
     return true;
   }
