@@ -43,6 +43,8 @@ jobs:
             command: npm run ci:parity:step2
           - stepLabel: Step 3 — Roadmap Data Skeleton Parity
             command: npm run ci:parity:step3
+          - stepLabel: Step 4 — Roadmap Behavioral Parity
+            command: npm run ci:parity:step4
 
     steps:
       - name: Checkout
@@ -62,4 +64,13 @@ jobs:
 
       - name: Run step parity tests (${{ matrix.stepLabel }})
         run: ${{ matrix.command }}
+
+  required-parity-gate:
+    name: Required Parity Gate
+    runs-on: ubuntu-latest
+    needs: [static-parity-checks, ui-parity-steps]
+
+    steps:
+      - name: Aggregate required checks
+        run: echo "All required parity jobs passed."
 

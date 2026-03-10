@@ -1,5 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { CategoryManifest, DifficultyMode, PhraseCategoryData, PhraseLibraryManifest } from '../../types';
+import { getFirstRoadmapPhraseIdForCategory, getNextRoadmapTarget } from '../../features/roadmap';
+import { loadState } from '../../state/store';
+import type { AppState, CategoryManifest, DifficultyMode, Phrase, PhraseCategoryData, PhraseLibraryManifest } from '../../types';
+import {
+  getCategoryCompletion,
+  getFirstUnlockedCategory,
+  getPhraseIndex,
+  isCategoryUnlocked,
+  isModeUnlocked,
+  isPhraseCompletedInMode,
+  isRoadmapPhraseUnlocked
+} from '../../utils/roadmap';
 
 const CATEGORY_ORDER = [
   'greetings',
@@ -24,26 +35,48 @@ function sortCategories(categories: CategoryManifest[]): CategoryManifest[] {
 
 export function RoadmapView(props: { onBack: () => void }): React.JSX.Element {
   const { onBack } = props;
+  const [appState] = useState<AppState>(() => loadState());
   const [difficulty, setDifficulty] = useState<DifficultyMode>('easy');
   const [categories, setCategories] = useState<CategoryManifest[]>([]);
+  const [allPhrases, setAllPhrases] = useState<Phrase[]>([]);
   const [activeCategoryId, setActiveCategoryId] = useState('');
-  const [phrases, setPhrases] = useState<Array<Pick<PhraseCategoryData['phrases'][number], 'it' | 'en'>>>([]);
+  const [selectedPhraseId, setSelectedPhraseId] = useState('');
   const [loadingCategories, setLoadingCategories] = useState(true);
-  const [loadingPhrases, setLoadingPhrases] = useState(false);
   const [error, setError] = useState('');
+
+  const isModeUnlockedForState = (mode: DifficultyMode): boolean => isModeUnlocked(appState, categories, mode);
+  const getPhrasePasses = (phraseId: string): number => appState.roadmapProgress[difficulty][phraseId] ?? 0;
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadManifest() {
+    async function loadRoadmapData() {
       try {
         setLoadingCategories(true);
         setError('');
         const response = await fetch('/phrases.json', { cache: 'force-cache' });
         const data = (await response.json()) as PhraseLibraryManifest;
         if (cancelled) return;
+
         const ordered = sortCategories(data.categories ?? []);
+        const categoryFiles = await Promise.all(
+          ordered.map(async (category) => {
+            const categoryResponse = await fetch(category.file, { cache: 'force-cache' });
+            const categoryData = (await categoryResponse.json()) as PhraseCategoryData;
+            const phrases = (categoryData.phrases ?? []).map((phrase, index) => ({
+              id: `${category.id}-${index}`,
+              categoryId: category.id,
+              categoryName: category.name,
+              it: phrase.it,
+              en: phrase.en
+            }));
+            return phrases;
+          })
+        );
+
+        if (cancelled) return;
         setCategories(ordered);
+        setAllPhrases(categoryFiles.flat());
         setActiveCategoryId((prev) => prev || ordered[0]?.id || '');
       } catch {
         if (!cancelled) setError('Could not load roadmap categories.');
@@ -52,63 +85,100 @@ export function RoadmapView(props: { onBack: () => void }): React.JSX.Element {
       }
     }
 
-    void loadManifest();
+    void loadRoadmapData();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const activeCategory = useMemo(
-    () => categories.find((category) => category.id === activeCategoryId) ?? categories[0],
-    [categories, activeCategoryId]
+  const modeIsUnlocked = isModeUnlockedForState(difficulty);
+  const firstUnlockedCategory = modeIsUnlocked ? getFirstUnlockedCategory(appState, categories, difficulty) : categories[0];
+  const activeCategory = useMemo(() => {
+    const found = categories.find((category) => category.id === activeCategoryId);
+    if (!found) return firstUnlockedCategory;
+
+    const index = categories.findIndex((category) => category.id === found.id);
+    return index >= 0 && isCategoryUnlocked(appState, index, categories, difficulty) ? found : firstUnlockedCategory;
+  }, [activeCategoryId, appState, categories, difficulty, firstUnlockedCategory]);
+
+  useEffect(() => {
+    if (activeCategory?.id && activeCategory.id !== activeCategoryId) {
+      setActiveCategoryId(activeCategory.id);
+    }
+  }, [activeCategory, activeCategoryId]);
+
+  const activePhrases = useMemo(
+    () =>
+      allPhrases
+        .filter((phrase) => phrase.categoryId === activeCategory?.id)
+        .sort((a, b) => getPhraseIndex(a.id) - getPhraseIndex(b.id)),
+    [activeCategory?.id, allPhrases]
   );
 
   useEffect(() => {
-    let cancelled = false;
-    if (!activeCategory?.file) {
-      setPhrases([]);
+    if (!activeCategory?.id) {
+      setSelectedPhraseId('');
       return;
     }
 
-    async function loadCategoryPhrases() {
-      try {
-        setLoadingPhrases(true);
-        setError('');
-        const response = await fetch(activeCategory.file, { cache: 'force-cache' });
-        const data = (await response.json()) as PhraseCategoryData;
-        if (!cancelled) setPhrases(data.phrases ?? []);
-      } catch {
-        if (!cancelled) setError('Could not load phrases for this category.');
-      } finally {
-        if (!cancelled) setLoadingPhrases(false);
-      }
+    const unlockedPhraseId = getFirstRoadmapPhraseIdForCategory({
+      categoryId: activeCategory.id,
+      mode: difficulty,
+      loadedPhrases: allPhrases,
+      isPhraseCompletedInMode: (phraseId, mode) => isPhraseCompletedInMode(appState, phraseId, mode)
+    });
+
+    if (unlockedPhraseId && unlockedPhraseId !== selectedPhraseId) {
+      setSelectedPhraseId(unlockedPhraseId);
+      return;
     }
 
-    void loadCategoryPhrases();
-    return () => {
-      cancelled = true;
-    };
-  }, [activeCategory?.file]);
+    if (!selectedPhraseId && activePhrases[0]?.id) {
+      setSelectedPhraseId(activePhrases[0].id);
+    }
+  }, [activeCategory?.id, activePhrases, allPhrases, appState, difficulty, selectedPhraseId]);
+
+  const selectedPhrase = activePhrases.find((phrase) => phrase.id === selectedPhraseId) ?? activePhrases[0];
+  const selectedPhrasePasses = selectedPhrase ? getPhrasePasses(selectedPhrase.id) : 0;
+  const selectedCategoryCompletion =
+    activeCategory && modeIsUnlocked ? getCategoryCompletion(appState, activeCategory, difficulty) : { complete: 0, total: 0, percent: 0 };
+  const roadmapNextTarget =
+    selectedPhrase && selectedPhrasePasses >= 3
+      ? getNextRoadmapTarget({
+          mode: difficulty,
+          currentCategoryId: selectedPhrase.categoryId,
+          currentPhraseId: selectedPhrase.id,
+          orderedCategories: categories,
+          loadedPhrases: allPhrases,
+          isCategoryUnlocked: (index, ordered, mode) => isCategoryUnlocked(appState, index, ordered, mode),
+          isModeUnlocked: (mode) => isModeUnlockedForState(mode),
+          getFirstUnlockedCategory: (mode) => getFirstUnlockedCategory(appState, categories, mode)
+        })
+      : null;
+  const nextTargetCategoryName =
+    roadmapNextTarget ? categories.find((category) => category.id === roadmapNextTarget.categoryId)?.name ?? roadmapNextTarget.categoryId : '';
 
   return (
     <section className="react-card react-card--roadmap">
       <div className="roadmap-head">
-        <h1>Roadmap (React WIP)</h1>
+        <h1>Roadmap</h1>
         <button className="btn btn--ghost" onClick={onBack}>
           Back to Landing
         </button>
       </div>
 
-      <p className="section-note">Phase 3 scaffold: data loading + category and phrase lists. Practice logic will be migrated next.</p>
+      <p className="section-note">Behavior parity mode: unlocks and pass counters follow roadmap state.</p>
 
       <div className="chips" aria-label="Difficulty">
         {(['easy', 'intermediate', 'hard'] as DifficultyMode[]).map((mode) => (
           <button
             key={mode}
             className={`btn btn--ghost chip ${difficulty === mode ? 'is-active' : ''}`}
+            data-mode={mode}
+            disabled={!isModeUnlockedForState(mode)}
             onClick={() => setDifficulty(mode)}
           >
-            {mode[0].toUpperCase() + mode.slice(1)}
+            {mode[0].toUpperCase() + mode.slice(1)} {!isModeUnlockedForState(mode) ? '🔒' : ''}
           </button>
         ))}
       </div>
@@ -120,16 +190,23 @@ export function RoadmapView(props: { onBack: () => void }): React.JSX.Element {
           <h2>Categories</h2>
           {loadingCategories ? <p>Loading categories…</p> : null}
           <div className="roadmap-list">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                className={`roadmap-cat ${activeCategory?.id === category.id ? 'is-active' : ''}`}
-                onClick={() => setActiveCategoryId(category.id)}
-              >
-                <span>{category.name}</span>
-                <span>{category.count}</span>
-              </button>
-            ))}
+            {categories.map((category, index) => {
+              const completion = getCategoryCompletion(appState, category, difficulty);
+              const unlocked = modeIsUnlocked && isCategoryUnlocked(appState, index, categories, difficulty);
+              const complete = completion.complete === completion.total && completion.total > 0;
+              return (
+                <button
+                  key={category.id}
+                  className={`roadmap-cat ${activeCategory?.id === category.id ? 'is-active' : ''} ${unlocked ? '' : 'is-locked'}`}
+                  data-roadmap-category={category.id}
+                  disabled={!unlocked}
+                  onClick={() => setActiveCategoryId(category.id)}
+                >
+                  <span>{category.name}</span>
+                  <span>{complete ? '✅' : `${completion.complete}/${category.count}`}</span>
+                </button>
+              );
+            })}
           </div>
         </section>
 
@@ -137,14 +214,36 @@ export function RoadmapView(props: { onBack: () => void }): React.JSX.Element {
           <h2>
             Phrases {activeCategory ? `· ${activeCategory.name}` : ''} <small>({difficulty})</small>
           </h2>
-          {loadingPhrases ? <p>Loading phrases…</p> : null}
+          {!modeIsUnlocked ? <p className="message">This mode is locked until the previous mode is fully complete.</p> : null}
+          {modeIsUnlocked && selectedCategoryCompletion.total > 0 ? (
+            <p className="section-note">
+              Category progress: {selectedCategoryCompletion.complete}/{selectedCategoryCompletion.total} ({selectedCategoryCompletion.percent}%)
+            </p>
+          ) : null}
+          {roadmapNextTarget ? (
+            <p className="section-note" data-roadmap-next-target>
+              Next target: {roadmapNextTarget.mode} · {nextTargetCategoryName} · Step {getPhraseIndex(roadmapNextTarget.phraseId) + 1}
+            </p>
+          ) : null}
           <div className="phrase-list-react">
-            {phrases.map((phrase, index) => (
-              <article key={`${activeCategory?.id ?? 'cat'}-${index}`} className="phrase-item-react">
-                <p className="phrase-it-react">{difficulty === 'hard' ? phrase.en : phrase.it}</p>
-                <p className="phrase-en-react">{phrase.en}</p>
-              </article>
-            ))}
+            {activePhrases.map((phrase, index) => {
+              const passes = getPhrasePasses(phrase.id);
+              const done = passes >= 3;
+              const unlocked = done || isRoadmapPhraseUnlocked(appState, phrase.categoryId, index, difficulty);
+              return (
+                <button
+                  key={phrase.id}
+                  className={`phrase-item-react roadmap-phrase ${selectedPhrase?.id === phrase.id ? 'is-active' : ''} ${unlocked ? '' : 'is-locked'}`}
+                  data-roadmap-phrase={phrase.id}
+                  disabled={!unlocked}
+                  onClick={() => setSelectedPhraseId(phrase.id)}
+                >
+                  <p className="phrase-it-react">{difficulty === 'hard' ? phrase.en : phrase.it}</p>
+                  <p className="phrase-en-react">{phrase.en}</p>
+                  <p className="phrase-meta-react">{done ? '✅' : unlocked ? `${passes}/3` : '🔒'}</p>
+                </button>
+              );
+            })}
           </div>
         </section>
       </div>
