@@ -80,6 +80,11 @@ body {
   background: transparent;
 }
 
+.btn--danger {
+  background: #5a2730;
+  border-color: #7a3548;
+}
+
 .is-hidden {
   display: none;
 }
@@ -312,6 +317,60 @@ body {
   border-radius: 10px;
   padding: 10px;
   color: #d6d9df;
+}
+
+.settings {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.settings label {
+  display: grid;
+  gap: 6px;
+}
+
+.settings .switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#theme-select,
+#font-range {
+  border-radius: 8px;
+  border: 1px solid #353945;
+  background: #1a1f28;
+  color: #f7f7f7;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.roadmap-practice-card {
+  margin-top: 12px;
+}
+
+.btn.is-recording {
+  background: #7a3548;
+  border-color: #a34b65;
+}
+
+.token {
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.token--exact {
+  color: #91f2a4;
+}
+
+.token--close {
+  color: #ffd778;
+}
+
+.token--miss,
+.token--extra {
+  color: #ff9ea3;
 }
 
 @media (max-width: 900px) {

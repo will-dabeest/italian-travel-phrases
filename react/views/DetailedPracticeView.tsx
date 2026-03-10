@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { loadState } from '../../state/store';
-import type { AppState, CategoryManifest, Phrase, PhraseCategoryData, PhraseLibraryManifest } from '../../types';
+import { applyDetailedPracticeRecognition, recognizeAndScore, toRecognitionErrorMessage } from '../pronunciation';
+import { loadState, resetState, saveState, updateStreak } from '../../state/store';
+import type { AppState, CategoryManifest, Phrase, PhraseCategoryData, PhraseLibraryManifest, Settings } from '../../types';
+import { speakItalian } from '../../utils/audio';
 import { createInitialCard, isDue, overdueDays } from '../../utils/srs';
 
 type FilterMode = 'all' | 'needs' | 'mastered' | 'difficult';
@@ -47,19 +49,30 @@ function similarity(a: string, b: string): number {
   return union ? overlap / union : 0;
 }
 
-export function DetailedPracticeView(props: { onBack: () => void }): React.JSX.Element {
-  const { onBack } = props;
-  const [appState] = useState<AppState>(() => loadState());
+function applySettings(settings: Settings): void {
+  document.documentElement.dataset.theme = settings.theme;
+  document.documentElement.dataset.contrast = settings.highContrast ? 'high' : 'normal';
+  document.documentElement.style.setProperty('--font-scale', String(settings.fontScale));
+}
+
+export function DetailedPracticeView(props: { onBack: () => void; onStateChanged?: (nextState: AppState) => void }): React.JSX.Element {
+  const { onBack, onStateChanged } = props;
+  const [appState, setAppState] = useState<AppState>(() => loadState());
   const [categories, setCategories] = useState<CategoryManifest[]>([]);
   const [phrases, setPhrases] = useState<Phrase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [recording, setRecording] = useState(false);
+  const [feedbackPhraseId, setFeedbackPhraseId] = useState('');
+  const [feedbackHtml, setFeedbackHtml] = useState(FEEDBACK_PLACEHOLDER_HTML);
 
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [filter, setFilter] = useState<FilterMode>('all');
   const [sortMode, setSortMode] = useState<SortMode>('relevance');
   const [selectedPhraseId, setSelectedPhraseId] = useState('');
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -166,12 +179,19 @@ export function DetailedPracticeView(props: { onBack: () => void }): React.JSX.E
 
   const selectedPhrase =
     phrases.find((item) => item.id === selectedPhraseId) ?? visiblePhrases[0] ?? phrases[0];
+  const selectedFeedback = selectedPhrase && feedbackPhraseId === selectedPhrase.id ? feedbackHtml : FEEDBACK_PLACEHOLDER_HTML;
 
   useEffect(() => {
     if (selectedPhrase && selectedPhrase.id !== selectedPhraseId) {
       setSelectedPhraseId(selectedPhrase.id);
     }
   }, [selectedPhrase, selectedPhraseId]);
+
+  const updateAppState = (nextState: AppState): void => {
+    setAppState(nextState);
+    saveState(nextState);
+    onStateChanged?.(nextState);
+  };
 
   const due = phrases.filter((phrase) => isDue(appState.srs[phrase.id] ?? createInitialCard()));
   const overdueCount = due.filter((phrase) => overdueDays(appState.srs[phrase.id] ?? createInitialCard()) > 0).length;
@@ -180,9 +200,21 @@ export function DetailedPracticeView(props: { onBack: () => void }): React.JSX.E
     <section className="react-card react-card--detailed">
       <div className="roadmap-head">
         <h1>Detailed Practice</h1>
-        <button className="btn btn--ghost" onClick={onBack}>
-          Back to Landing
-        </button>
+        <div className="landing-actions">
+          <button className="btn btn--ghost" onClick={onBack}>
+            Back to Landing
+          </button>
+          <button
+            id="settings-toggle"
+            className="btn btn--ghost"
+            aria-label="Settings"
+            aria-controls="settings-panel"
+            aria-expanded={settingsOpen}
+            onClick={() => setSettingsOpen((current) => !current)}
+          >
+            Settings
+          </button>
+        </div>
       </div>
 
       <p className="section-note">
@@ -256,7 +288,10 @@ export function DetailedPracticeView(props: { onBack: () => void }): React.JSX.E
                   key={phrase.id}
                   className={`phrase-item ${selectedPhrase?.id === phrase.id ? 'is-active' : ''}`}
                   data-phrase-id={phrase.id}
-                  onClick={() => setSelectedPhraseId(phrase.id)}
+                  onClick={() => {
+                    setSelectedPhraseId(phrase.id);
+                    setMessage('');
+                  }}
                 >
                   <div className="phrase-it">{phrase.it}</div>
                   <div className="phrase-en">{phrase.en}</div>
@@ -290,11 +325,44 @@ export function DetailedPracticeView(props: { onBack: () => void }): React.JSX.E
               <p className="practice-it">{selectedPhrase.it}</p>
               <p className="practice-en">{selectedPhrase.en}</p>
               <div className="practice-actions">
-                <button id="speak-btn" className="btn" disabled>
+                <button
+                  id="speak-btn"
+                  className="btn"
+                  onClick={() => {
+                    if (!selectedPhrase) return;
+                    speakItalian(selectedPhrase.it).catch((playbackError) => {
+                      setMessage(playbackError instanceof Error ? playbackError.message : 'Could not play pronunciation in this browser.');
+                    });
+                  }}
+                >
                   Play Audio
                 </button>
-                <button id="record-btn" className="btn btn--accent" disabled>
-                  Speak Now
+                <button
+                  id="record-btn"
+                  className={`btn btn--accent ${recording ? 'is-recording' : ''}`}
+                  disabled={recording}
+                  onClick={() => {
+                    if (!selectedPhrase || recording) return;
+                    setRecording(true);
+                    setMessage('');
+
+                    recognizeAndScore(selectedPhrase.it)
+                      .then((result) => {
+                        const apply = applyDetailedPracticeRecognition({ state: appState, phrase: selectedPhrase });
+                        const next = apply(result);
+                        updateAppState(next.nextState);
+                        setFeedbackPhraseId(selectedPhrase.id);
+                        setFeedbackHtml(next.feedbackHtml);
+                      })
+                      .catch((recognitionError) => {
+                        setMessage(toRecognitionErrorMessage(recognitionError));
+                      })
+                      .finally(() => {
+                        setRecording(false);
+                      });
+                  }}
+                >
+                  {recording ? 'Listening…' : 'Speak Now'}
                 </button>
               </div>
             </>
@@ -302,9 +370,81 @@ export function DetailedPracticeView(props: { onBack: () => void }): React.JSX.E
             <p>No phrase available with current filters.</p>
           )}
 
-          <div className="feedback" id="feedback" dangerouslySetInnerHTML={{ __html: FEEDBACK_PLACEHOLDER_HTML }}></div>
+          <div className="feedback" id="feedback" dangerouslySetInnerHTML={{ __html: selectedFeedback }}></div>
+          {message ? <p className="message">{message}</p> : null}
         </section>
       </main>
+
+      <aside id="settings-panel" className="settings card" hidden={!settingsOpen} aria-label="Settings panel">
+        <h2>Settings</h2>
+        <label>
+          <span>Theme</span>
+          <select
+            id="theme-select"
+            aria-label="Theme"
+            value={appState.settings.theme}
+            onChange={(event) => {
+              const nextState = structuredClone(appState);
+              nextState.settings.theme = event.target.value === 'light' ? 'light' : 'dark';
+              applySettings(nextState.settings);
+              updateAppState(nextState);
+            }}
+          >
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </label>
+        <label className="switch">
+          <input
+            id="contrast-toggle"
+            type="checkbox"
+            checked={appState.settings.highContrast}
+            onChange={(event) => {
+              const nextState = structuredClone(appState);
+              nextState.settings.highContrast = event.target.checked;
+              applySettings(nextState.settings);
+              updateAppState(nextState);
+            }}
+          />{' '}
+          High contrast
+        </label>
+        <label>
+          <span>Font size</span>
+          <input
+            id="font-range"
+            type="range"
+            min="0.9"
+            max="1.25"
+            step="0.05"
+            value={appState.settings.fontScale}
+            aria-label="Font size"
+            onInput={(event) => {
+              const target = event.target as HTMLInputElement;
+              const nextState = structuredClone(appState);
+              nextState.settings.fontScale = Number(target.value);
+              applySettings(nextState.settings);
+              updateAppState(nextState);
+            }}
+          />
+        </label>
+        <button
+          id="reset-btn"
+          className="btn btn--danger"
+          aria-label="Reset local data"
+          onClick={() => {
+            if (!window.confirm('Reset all saved progress and preferences?')) return;
+            const nextState = resetState();
+            updateStreak(nextState);
+            applySettings(nextState.settings);
+            updateAppState(nextState);
+            setFeedbackPhraseId('');
+            setFeedbackHtml(FEEDBACK_PLACEHOLDER_HTML);
+            setMessage('');
+          }}
+        >
+          Reset all progress
+        </button>
+      </aside>
     </section>
   );
 }

@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getFirstRoadmapPhraseIdForCategory, getNextRoadmapTarget } from '../../features/roadmap';
+import { applyRoadmapRecognition, recognizeAndScore, toRecognitionErrorMessage } from '../pronunciation';
 import { loadState } from '../../state/store';
 import type { AppState, CategoryManifest, DifficultyMode, Phrase, PhraseCategoryData, PhraseLibraryManifest } from '../../types';
+import { speakItalian } from '../../utils/audio';
 import {
   getCategoryCompletion,
   getFirstUnlockedCategory,
@@ -35,7 +37,7 @@ function sortCategories(categories: CategoryManifest[]): CategoryManifest[] {
 
 export function RoadmapView(props: { onBack: () => void }): React.JSX.Element {
   const { onBack } = props;
-  const [appState] = useState<AppState>(() => loadState());
+  const [appState, setAppState] = useState<AppState>(() => loadState());
   const [difficulty, setDifficulty] = useState<DifficultyMode>('easy');
   const [categories, setCategories] = useState<CategoryManifest[]>([]);
   const [allPhrases, setAllPhrases] = useState<Phrase[]>([]);
@@ -43,6 +45,10 @@ export function RoadmapView(props: { onBack: () => void }): React.JSX.Element {
   const [selectedPhraseId, setSelectedPhraseId] = useState('');
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [recording, setRecording] = useState(false);
+  const [feedbackPhraseId, setFeedbackPhraseId] = useState('');
+  const [feedbackHtml, setFeedbackHtml] = useState('<p>Practice feedback appears here for the selected phrase.</p>');
 
   const isModeUnlockedForState = (mode: DifficultyMode): boolean => isModeUnlocked(appState, categories, mode);
   const getPhrasePasses = (phraseId: string): number => appState.roadmapProgress[difficulty][phraseId] ?? 0;
@@ -139,6 +145,7 @@ export function RoadmapView(props: { onBack: () => void }): React.JSX.Element {
   }, [activeCategory?.id, activePhrases, allPhrases, appState, difficulty, selectedPhraseId]);
 
   const selectedPhrase = activePhrases.find((phrase) => phrase.id === selectedPhraseId) ?? activePhrases[0];
+  const selectedFeedback = selectedPhrase && feedbackPhraseId === selectedPhrase.id ? feedbackHtml : '<p>Practice feedback appears here for the selected phrase.</p>';
   const selectedPhrasePasses = selectedPhrase ? getPhrasePasses(selectedPhrase.id) : 0;
   const selectedCategoryCompletion =
     activeCategory && modeIsUnlocked ? getCategoryCompletion(appState, activeCategory, difficulty) : { complete: 0, total: 0, percent: 0 };
@@ -245,6 +252,60 @@ export function RoadmapView(props: { onBack: () => void }): React.JSX.Element {
               );
             })}
           </div>
+
+          <section className="practice card roadmap-practice-card" aria-label="Roadmap pronunciation practice">
+            <h3>Pronunciation Practice</h3>
+            {selectedPhrase ? (
+              <>
+                <p className="practice-it">{difficulty === 'hard' ? '••••••' : selectedPhrase.it}</p>
+                <p className="practice-en">{selectedPhrase.en}</p>
+                <div className="practice-actions">
+                  <button
+                    id="roadmap-speak-btn"
+                    className="btn"
+                    onClick={() => {
+                      speakItalian(selectedPhrase.it).catch((playbackError) => {
+                        setMessage(playbackError instanceof Error ? playbackError.message : 'Could not play pronunciation in this browser.');
+                      });
+                    }}
+                  >
+                    Play Audio
+                  </button>
+                  <button
+                    id="roadmap-record-btn"
+                    className={`btn btn--accent ${recording ? 'is-recording' : ''}`}
+                    disabled={recording}
+                    onClick={() => {
+                      if (!selectedPhrase || recording) return;
+                      setRecording(true);
+                      setMessage('');
+
+                      recognizeAndScore(selectedPhrase.it)
+                        .then((result) => {
+                          const apply = applyRoadmapRecognition({ state: appState, phrase: selectedPhrase, mode: difficulty });
+                          const next = apply(result);
+                          setAppState(next.nextState);
+                          setFeedbackPhraseId(selectedPhrase.id);
+                          setFeedbackHtml(next.feedbackHtml);
+                        })
+                        .catch((recognitionError) => {
+                          setMessage(toRecognitionErrorMessage(recognitionError));
+                        })
+                        .finally(() => {
+                          setRecording(false);
+                        });
+                    }}
+                  >
+                    {recording ? 'Listening…' : 'Speak Now'}
+                  </button>
+                </div>
+                <div className="feedback" id="roadmap-feedback" dangerouslySetInnerHTML={{ __html: selectedFeedback }}></div>
+              </>
+            ) : (
+              <p>No phrase selected.</p>
+            )}
+            {message ? <p className="message">{message}</p> : null}
+          </section>
         </section>
       </div>
     </section>
