@@ -422,4 +422,78 @@ test.describe('React parity executable checks (REACT_MIGRATION.md + REACT_PARITY
       await expect(reactPage.locator('.is-matched')).toHaveCount(0);
     });
   });
+
+  test('Step 8 — Settings/system parity: theme, contrast, font, reset @step8', async ({ browser }) => {
+    await withParityPages(browser, async ({ vanillaPage, reactPage }) => {
+      await seedCustomState('/', vanillaPage, freshState);
+      await seedCustomState('/react.html', reactPage, freshState);
+
+      await vanillaPage.getByRole('button', { name: /Practice/ }).click();
+      await reactPage.getByRole('button', { name: /Practice/ }).click();
+
+      await vanillaPage.locator('#settings-toggle').click();
+      await reactPage.locator('#settings-toggle').click();
+
+      await expect(vanillaPage.locator('#settings-panel')).toBeVisible();
+      await expect(reactPage.locator('#settings-panel')).toBeVisible();
+
+      await vanillaPage.locator('#theme-select').selectOption('light');
+      await reactPage.locator('#theme-select').selectOption('light');
+
+      await vanillaPage.locator('#contrast-toggle').setChecked(true);
+      await reactPage.locator('#contrast-toggle').setChecked(true);
+
+      await vanillaPage.locator('#font-range').evaluate((element) => {
+        const input = element as HTMLInputElement;
+        input.value = '1.25';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      await reactPage.locator('#font-range').evaluate((element) => {
+        const input = element as HTMLInputElement;
+        input.value = '1.25';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+
+      await expect(vanillaPage.locator('html')).toHaveAttribute('data-theme', 'light');
+      await expect(reactPage.locator('html')).toHaveAttribute('data-theme', 'light');
+      await expect(vanillaPage.locator('html')).toHaveAttribute('data-contrast', 'high');
+      await expect(reactPage.locator('html')).toHaveAttribute('data-contrast', 'high');
+
+      const vanillaFontScale = await vanillaPage.evaluate(() => document.documentElement.style.getPropertyValue('--font-scale').trim());
+      const reactFontScale = await reactPage.evaluate(() => document.documentElement.style.getPropertyValue('--font-scale').trim());
+      expect(vanillaFontScale).toBe('1.25');
+      expect(reactFontScale).toBe('1.25');
+
+      const vanillaBeforeReset = await vanillaPage.evaluate((key) => JSON.parse(window.localStorage.getItem(key) || '{}'), STORAGE_KEY);
+      const reactBeforeReset = await reactPage.evaluate((key) => JSON.parse(window.localStorage.getItem(key) || '{}'), STORAGE_KEY);
+      expect(vanillaBeforeReset.settings.theme).toBe('light');
+      expect(reactBeforeReset.settings.theme).toBe('light');
+      expect(vanillaBeforeReset.settings.highContrast).toBe(true);
+      expect(reactBeforeReset.settings.highContrast).toBe(true);
+      expect(vanillaBeforeReset.settings.fontScale).toBe(1.25);
+      expect(reactBeforeReset.settings.fontScale).toBe(1.25);
+
+      vanillaPage.once('dialog', (dialog) => dialog.accept());
+      reactPage.once('dialog', (dialog) => dialog.accept());
+      await vanillaPage.locator('#reset-btn').click();
+      await reactPage.locator('#reset-btn').click();
+
+      await expect(vanillaPage.locator('html')).toHaveAttribute('data-theme', 'dark');
+      await expect(reactPage.locator('html')).toHaveAttribute('data-theme', 'dark');
+      await expect(vanillaPage.locator('html')).toHaveAttribute('data-contrast', 'normal');
+      await expect(reactPage.locator('html')).toHaveAttribute('data-contrast', 'normal');
+
+      const vanillaAfterReset = await vanillaPage.evaluate((key) => JSON.parse(window.localStorage.getItem(key) || '{}'), STORAGE_KEY);
+      const reactAfterReset = await reactPage.evaluate((key) => JSON.parse(window.localStorage.getItem(key) || '{}'), STORAGE_KEY);
+
+      expect(vanillaAfterReset.settings.theme).toBe('dark');
+      expect(reactAfterReset.settings.theme).toBe('dark');
+      expect(vanillaAfterReset.settings.highContrast).toBe(false);
+      expect(reactAfterReset.settings.highContrast).toBe(false);
+      expect(vanillaAfterReset.settings.fontScale).toBe(1);
+      expect(reactAfterReset.settings.fontScale).toBe(1);
+      expect(Array.isArray(vanillaAfterReset.phrasesProgress.promptCompletedCategories)).toBe(true);
+      expect(Array.isArray(reactAfterReset.phrasesProgress.promptCompletedCategories)).toBe(true);
+    });
+  });
 });

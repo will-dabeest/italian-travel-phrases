@@ -59,6 +59,8 @@ jobs:
             command: npm run ci:parity:step6
           - stepLabel: Step 7 — Phrases Mode Parity
             command: npm run ci:parity:step7
+          - stepLabel: Step 8 — Settings/System/PWA Parity
+            command: npm run ci:parity:step8
 
     steps:
       - name: Checkout

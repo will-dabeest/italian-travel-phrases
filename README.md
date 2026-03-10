@@ -104,6 +104,7 @@ Step-based parity commands:
 - Run Step 5 — Detailed Practice Parity: `npm run ci:parity:step5`
 - Run Step 6 — Pronunciation Flow Parity: `npm run ci:parity:step6`
 - Run Step 7 — Phrases Mode Parity: `npm run ci:parity:step7`
+- Run Step 8 — Settings/System/PWA Parity: `npm run ci:parity:step8`
 
 Branch protection recommendation:
 - Require only the `Required Parity Gate` status check from `.github/workflows/react-parity.yml`.

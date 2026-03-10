@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { applyDetailedPracticeRecognition, recognizeAndScore, toRecognitionErrorMessage } from '../pronunciation';
-import { loadState } from '../../state/store';
-import type { AppState, CategoryManifest, Phrase, PhraseCategoryData, PhraseLibraryManifest } from '../../types';
+import { loadState, resetState, saveState, updateStreak } from '../../state/store';
+import type { AppState, CategoryManifest, Phrase, PhraseCategoryData, PhraseLibraryManifest, Settings } from '../../types';
 import { speakItalian } from '../../utils/audio';
 import { createInitialCard, isDue, overdueDays } from '../../utils/srs';
 
@@ -49,8 +49,14 @@ function similarity(a: string, b: string): number {
   return union ? overlap / union : 0;
 }
 
-export function DetailedPracticeView(props: { onBack: () => void }): React.JSX.Element {
-  const { onBack } = props;
+function applySettings(settings: Settings): void {
+  document.documentElement.dataset.theme = settings.theme;
+  document.documentElement.dataset.contrast = settings.highContrast ? 'high' : 'normal';
+  document.documentElement.style.setProperty('--font-scale', String(settings.fontScale));
+}
+
+export function DetailedPracticeView(props: { onBack: () => void; onStateChanged?: (nextState: AppState) => void }): React.JSX.Element {
+  const { onBack, onStateChanged } = props;
   const [appState, setAppState] = useState<AppState>(() => loadState());
   const [categories, setCategories] = useState<CategoryManifest[]>([]);
   const [phrases, setPhrases] = useState<Phrase[]>([]);
@@ -66,6 +72,7 @@ export function DetailedPracticeView(props: { onBack: () => void }): React.JSX.E
   const [filter, setFilter] = useState<FilterMode>('all');
   const [sortMode, setSortMode] = useState<SortMode>('relevance');
   const [selectedPhraseId, setSelectedPhraseId] = useState('');
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -180,6 +187,12 @@ export function DetailedPracticeView(props: { onBack: () => void }): React.JSX.E
     }
   }, [selectedPhrase, selectedPhraseId]);
 
+  const updateAppState = (nextState: AppState): void => {
+    setAppState(nextState);
+    saveState(nextState);
+    onStateChanged?.(nextState);
+  };
+
   const due = phrases.filter((phrase) => isDue(appState.srs[phrase.id] ?? createInitialCard()));
   const overdueCount = due.filter((phrase) => overdueDays(appState.srs[phrase.id] ?? createInitialCard()) > 0).length;
 
@@ -187,9 +200,21 @@ export function DetailedPracticeView(props: { onBack: () => void }): React.JSX.E
     <section className="react-card react-card--detailed">
       <div className="roadmap-head">
         <h1>Detailed Practice</h1>
-        <button className="btn btn--ghost" onClick={onBack}>
-          Back to Landing
-        </button>
+        <div className="landing-actions">
+          <button className="btn btn--ghost" onClick={onBack}>
+            Back to Landing
+          </button>
+          <button
+            id="settings-toggle"
+            className="btn btn--ghost"
+            aria-label="Settings"
+            aria-controls="settings-panel"
+            aria-expanded={settingsOpen}
+            onClick={() => setSettingsOpen((current) => !current)}
+          >
+            Settings
+          </button>
+        </div>
       </div>
 
       <p className="section-note">
@@ -325,7 +350,7 @@ export function DetailedPracticeView(props: { onBack: () => void }): React.JSX.E
                       .then((result) => {
                         const apply = applyDetailedPracticeRecognition({ state: appState, phrase: selectedPhrase });
                         const next = apply(result);
-                        setAppState(next.nextState);
+                        updateAppState(next.nextState);
                         setFeedbackPhraseId(selectedPhrase.id);
                         setFeedbackHtml(next.feedbackHtml);
                       })
@@ -349,6 +374,77 @@ export function DetailedPracticeView(props: { onBack: () => void }): React.JSX.E
           {message ? <p className="message">{message}</p> : null}
         </section>
       </main>
+
+      <aside id="settings-panel" className="settings card" hidden={!settingsOpen} aria-label="Settings panel">
+        <h2>Settings</h2>
+        <label>
+          <span>Theme</span>
+          <select
+            id="theme-select"
+            aria-label="Theme"
+            value={appState.settings.theme}
+            onChange={(event) => {
+              const nextState = structuredClone(appState);
+              nextState.settings.theme = event.target.value === 'light' ? 'light' : 'dark';
+              applySettings(nextState.settings);
+              updateAppState(nextState);
+            }}
+          >
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </label>
+        <label className="switch">
+          <input
+            id="contrast-toggle"
+            type="checkbox"
+            checked={appState.settings.highContrast}
+            onChange={(event) => {
+              const nextState = structuredClone(appState);
+              nextState.settings.highContrast = event.target.checked;
+              applySettings(nextState.settings);
+              updateAppState(nextState);
+            }}
+          />{' '}
+          High contrast
+        </label>
+        <label>
+          <span>Font size</span>
+          <input
+            id="font-range"
+            type="range"
+            min="0.9"
+            max="1.25"
+            step="0.05"
+            value={appState.settings.fontScale}
+            aria-label="Font size"
+            onInput={(event) => {
+              const target = event.target as HTMLInputElement;
+              const nextState = structuredClone(appState);
+              nextState.settings.fontScale = Number(target.value);
+              applySettings(nextState.settings);
+              updateAppState(nextState);
+            }}
+          />
+        </label>
+        <button
+          id="reset-btn"
+          className="btn btn--danger"
+          aria-label="Reset local data"
+          onClick={() => {
+            if (!window.confirm('Reset all saved progress and preferences?')) return;
+            const nextState = resetState();
+            updateStreak(nextState);
+            applySettings(nextState.settings);
+            updateAppState(nextState);
+            setFeedbackPhraseId('');
+            setFeedbackHtml(FEEDBACK_PLACEHOLDER_HTML);
+            setMessage('');
+          }}
+        >
+          Reset all progress
+        </button>
+      </aside>
     </section>
   );
 }
