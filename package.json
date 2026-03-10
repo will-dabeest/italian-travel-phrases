@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:react": "vite --config vite.react.config.ts --open /react.html",
     "build": "vite build",
+    "build:react": "vite build --config vite.react.config.ts",
     "preview": "vite preview",
+    "preview:react": "vite preview --config vite.react.config.ts",
     "check": "tsc --noEmit",
     "docker:build": "docker build -t italian-travel-phrase-trainer .",
     "docker:run": "docker run --rm -p 8080:80 italian-travel-phrase-trainer",
@@ -14,7 +17,14 @@
     "docker:down": "docker compose down"
   },
   "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.4",
     "typescript": "^5.9.2",
     "vite": "^7.1.3"
+  },
+  "dependencies": {
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   }
 }

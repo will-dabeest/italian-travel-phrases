@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Italian Travel Phrase Trainer logo">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#7BAF7B"/>
+      <stop offset="100%" stop-color="#3A67C9"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="104" fill="#1A1A1A"/>
+  <path d="M110 128h292v56H110z" fill="#C96B47"/>
+  <path d="M110 228h292v56H110z" fill="url(#g)"/>
+  <path d="M110 328h292v56H110z" fill="#F7F7F7"/>
+  <circle cx="380" cy="148" r="18" fill="#F7F7F7"/>
+  <path d="M132 164h118v186c0 30-22 52-52 52s-52-22-52-52v-38h44v34c0 6 3 12 8 12s8-6 8-12V164h-74z" fill="#0F0F0F"/>
+</svg>

@@ -1,0 +1,19 @@
+﻿{
+    "id":  "trains",
+    "name":  "Train Stations",
+    "phrases":  [
+                    {
+                        "it":  "È in orario?",
+                        "en":  "Is it on time?"
+                    },
+                    {
+                        "it":  "C’è un supplemento?",
+                        "en":  "Is there a surcharge?"
+                    },
+                    {
+                        "it":  "Il binario è cambiato",
+                        "en":  "The platform has changed"
+                    }
+                ]
+}
+

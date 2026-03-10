@@ -1,0 +1,23 @@
+﻿{
+    "id":  "restaurants_extra",
+    "name":  "Restaurants Extra",
+    "phrases":  [
+                    {
+                        "it":  "Siamo in ritardo",
+                        "en":  "We’re running late"
+                    },
+                    {
+                        "it":  "Arriviamo tra dieci minuti",
+                        "en":  "We’ll arrive in 10 minutes"
+                    },
+                    {
+                        "it":  "È piccante?",
+                        "en":  "Is it spicy?"
+                    },
+                    {
+                        "it":  "È possibile dividere?",
+                        "en":  "Is it possible to split (the dish)?"
+                    }
+                ]
+}
+

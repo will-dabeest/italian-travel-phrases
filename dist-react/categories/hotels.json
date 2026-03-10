@@ -1,0 +1,35 @@
+﻿{
+    "id":  "hotels",
+    "name":  "Hotels \u0026 Check-In",
+    "phrases":  [
+                    {
+                        "it":  "Ho una prenotazione",
+                        "en":  "I have a reservation"
+                    },
+                    {
+                        "it":  "A che ora è il check-out?",
+                        "en":  "What time is check-out?"
+                    },
+                    {
+                        "it":  "C’è la colazione inclusa?",
+                        "en":  "Is breakfast included?"
+                    },
+                    {
+                        "it":  "Posso lasciare i bagagli?",
+                        "en":  "Can I leave my bags?"
+                    },
+                    {
+                        "it":  "Il Wi-Fi non funziona",
+                        "en":  "The Wi-Fi isn’t working"
+                    },
+                    {
+                        "it":  "C’è un ascensore?",
+                        "en":  "Is there an elevator?"
+                    },
+                    {
+                        "it":  "Vorrei un taxi, per favore",
+                        "en":  "I’d like a taxi, please"
+                    }
+                ]
+}
+

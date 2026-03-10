@@ -77,6 +77,23 @@ npm run build
 npm run preview
 ```
 
+## React Learning Scaffold (Parallel)
+
+The production app remains the vanilla TypeScript entry (`npm run dev`).
+
+Use these commands for the parallel React migration scaffold:
+
+```bash
+npm run dev:react
+npm run build:react
+npm run preview:react
+```
+
+Notes:
+- React scaffold entry: `react.html`
+- React scaffold source: `react/`
+- React build output: `dist-react`
+
 ## Docker
 
 Quick start (simplest):

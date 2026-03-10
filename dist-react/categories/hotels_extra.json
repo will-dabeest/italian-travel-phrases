@@ -1,0 +1,15 @@
+﻿{
+    "id":  "hotels_extra",
+    "name":  "Hotels Extra",
+    "phrases":  [
+                    {
+                        "it":  "È possibile un check-out tardivo?",
+                        "en":  "Is late check-out possible?"
+                    },
+                    {
+                        "it":  "C’è aria condizionata?",
+                        "en":  "Is there air conditioning?"
+                    }
+                ]
+}
+

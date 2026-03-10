@@ -1,0 +1,35 @@
+﻿{
+    "id":  "emergencies",
+    "name":  "Emergencies",
+    "phrases":  [
+                    {
+                        "it":  "Aiuto!",
+                        "en":  "Help!"
+                    },
+                    {
+                        "it":  "Chiamate un’ambulanza!",
+                        "en":  "Call an ambulance!"
+                    },
+                    {
+                        "it":  "Dov’è la farmacia più vicina?",
+                        "en":  "Where is the nearest pharmacy?"
+                    },
+                    {
+                        "it":  "Ho bisogno di un medico",
+                        "en":  "I need a doctor"
+                    },
+                    {
+                        "it":  "Mi sono perso",
+                        "en":  "I’m lost"
+                    },
+                    {
+                        "it":  "Ho perso il mio portafoglio",
+                        "en":  "I lost my wallet"
+                    },
+                    {
+                        "it":  "Mi fa male qui",
+                        "en":  "It hurts here"
+                    }
+                ]
+}
+
