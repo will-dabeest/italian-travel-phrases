@@ -69,11 +69,8 @@ jobs:
       - name: Validate parity checklist
         run: npm run ci:parity:checklist
 
-      - name: Run Step 2 parity tests
-        run: npm run ci:parity:step2
-
-      - name: Run Step 3 parity tests
-        run: npm run ci:parity:step3
+      - name: Run all declared parity step tests
+        run: npm run ci:parity:all-steps
 
   publish:
     name: Publish image to GHCR

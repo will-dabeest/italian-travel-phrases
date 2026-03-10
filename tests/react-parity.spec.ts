@@ -17,13 +17,33 @@ const freshState = {
   }
 };
 
+const step4Fixture = {
+  ...freshState,
+  roadmapProgress: {
+    easy: {
+      'greetings-0': 3,
+      'greetings-1': 2
+    },
+    intermediate: {},
+    hard: {}
+  }
+};
+
 async function seedState(pagePath: '/' | '/react.html', page: import('@playwright/test').Page): Promise<void> {
+  await seedCustomState(pagePath, page, freshState);
+}
+
+async function seedCustomState(
+  pagePath: '/' | '/react.html',
+  page: import('@playwright/test').Page,
+  stateValue: typeof freshState
+): Promise<void> {
   await page.goto(pagePath);
   await page.evaluate(
     ({ key, value }) => {
       window.localStorage.setItem(key, JSON.stringify(value));
     },
-    { key: STORAGE_KEY, value: freshState }
+    { key: STORAGE_KEY, value: stateValue }
   );
   await page.reload();
 }
@@ -95,6 +115,34 @@ test.describe('React parity executable checks (REACT_MIGRATION.md + REACT_PARITY
 
       await expect(vanillaCategories).toHaveCount(expectedCategoryCount);
       await expect(reactCategories).toHaveCount(expectedCategoryCount);
+    });
+  });
+
+  test('Step 4 — Roadmap behavioral parity: unlock chains and pass state @step4', async ({ browser }) => {
+    await withParityPages(browser, async ({ vanillaPage, reactPage }) => {
+      await seedCustomState('/', vanillaPage, step4Fixture);
+      await seedCustomState('/react.html', reactPage, step4Fixture);
+
+      await vanillaPage.getByRole('button', { name: 'Roadmap' }).click();
+      await reactPage.getByRole('button', { name: 'Roadmap' }).click();
+
+      await expect(vanillaPage.locator('[data-mode="intermediate"]')).toBeDisabled();
+      await expect(vanillaPage.locator('[data-mode="hard"]')).toBeDisabled();
+      await expect(reactPage.locator('[data-mode="intermediate"]')).toBeDisabled();
+      await expect(reactPage.locator('[data-mode="hard"]')).toBeDisabled();
+
+      await expect(vanillaPage.locator('[data-roadmap-category="greetings"]')).toBeEnabled();
+      await expect(vanillaPage.locator('[data-roadmap-category="navigation"]')).toBeDisabled();
+      await expect(reactPage.locator('[data-roadmap-category="greetings"]')).toBeEnabled();
+      await expect(reactPage.locator('[data-roadmap-category="navigation"]')).toBeDisabled();
+
+      await expect(vanillaPage.locator('[data-roadmap-phrase="greetings-0"]')).toBeEnabled();
+      await expect(vanillaPage.locator('[data-roadmap-phrase="greetings-1"]')).toBeEnabled();
+      await expect(vanillaPage.locator('[data-roadmap-phrase="greetings-2"]')).toBeDisabled();
+
+      await expect(reactPage.locator('[data-roadmap-phrase="greetings-0"]')).toBeEnabled();
+      await expect(reactPage.locator('[data-roadmap-phrase="greetings-1"]')).toBeEnabled();
+      await expect(reactPage.locator('[data-roadmap-phrase="greetings-2"]')).toBeDisabled();
     });
   });
 });

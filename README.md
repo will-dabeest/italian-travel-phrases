@@ -100,6 +100,11 @@ Step-based parity commands:
 - Run all declared parity step tests: `npm run ci:parity:all-steps`
 - Run Step 2 — Landing Parity: `npm run ci:parity:step2`
 - Run Step 3 — Roadmap Data Skeleton Parity: `npm run ci:parity:step3`
+- Run Step 4 — Roadmap Behavioral Parity: `npm run ci:parity:step4`
+
+Branch protection recommendation:
+- Require only the `Required Parity Gate` status check from `.github/workflows/react-parity.yml`.
+- This gate depends on all parity matrix jobs, so adding new step jobs does not require branch-protection updates.
 
 ## Docker
 
@@ -133,7 +138,7 @@ Recommendation:
 - Workflow: `.github/workflows/publish-docker-ghcr.yml`
 - Trigger: only when a pull request is merged into `main`
 - Path guard: skipped when merged PR changes are docs/workflow-only (no publish-relevant runtime/build files)
-- Safety gate: publish runs only after parity/test checks pass (`ci:parity:gates`, checklist validation, Step 2 + Step 3 parity tests)
+- Safety gate: publish runs only after parity/test checks pass (`ci:parity:gates`, checklist validation, and all declared step parity tests via `ci:parity:all-steps`)
 - Registry target: `ghcr.io/<your-github-owner>/italian-travel-phrase-trainer`
 - Tags pushed: `latest` and commit SHA tag (`sha-<commit>`)
 
